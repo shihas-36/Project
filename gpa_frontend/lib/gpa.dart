@@ -59,18 +59,12 @@ class _GpaCalculatorState extends State<GpaCalculator> {
         final data = json.decode(response.body) as Map<String, dynamic>;
         setState(() {
           subjectsCredits = data.map((semesterKey, subjectsMap) {
-            Map<String, int> normalizedSubjects = {};
-            (subjectsMap as Map<String, dynamic>).forEach((rawSubject, credit) {
-              // Normalize subject keys
-              String normalizedSubject = rawSubject
-                      .toLowerCase()
-                      .replaceAllMapped(' ', (match) => '_')
-                      .replaceAllMapped(
-                          '&', (match) => '_and_') // Handle special characters
-                  ; // Remove invalid chars
-              normalizedSubjects[normalizedSubject] = credit as int;
-            });
-            return MapEntry(semesterKey, normalizedSubjects);
+            return MapEntry(
+              semesterKey,
+              (subjectsMap as Map<String, dynamic>).map<String, int>(
+                (subject, credit) => MapEntry(subject, credit as int),
+              ),
+            );
           });
 
           // Initialize semesterGrades with normalized keys
@@ -123,9 +117,9 @@ class _GpaCalculatorState extends State<GpaCalculator> {
               // Normalize subject keys to match subjectsCredits
               String normalizedSubject = subject['name']
                   .toLowerCase()
-                  .replaceAllMapped(' ', (match) => '_')
-                  .replaceAllMapped('&', (match) => '_and_')
-                  .replaceAllMapped(RegExp(r'[^a-z0-9_]'), (match) => '');
+                  .replaceAll(' ', '_')
+                  .replaceAll('&', '_and_')
+                  .replaceAll(RegExp(r'[^a-z0-9_]'), '');
 
               if (subjectsCredits[semesterKey]!
                   .containsKey(normalizedSubject)) {
@@ -176,8 +170,7 @@ class _GpaCalculatorState extends State<GpaCalculator> {
 
       Map<String, String?> formattedSubjectGrades = {
         for (var entry in semesterGrades[semester]!.entries)
-          entry.key.toLowerCase().replaceAllMapped(' ', (match) => '_'):
-              entry.value
+          entry.key: entry.value // Use original subject names
       };
 
       final payload = json.encode({
@@ -199,8 +192,8 @@ class _GpaCalculatorState extends State<GpaCalculator> {
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         setState(() {
-          gpa = responseData['semester_gpa'];
-          cgpa = responseData['cgpa'];
+          gpa = responseData['semester_gpa']?.toDouble();
+          cgpa = responseData['cgpa']?.toDouble();
           print("GPA calculated successfully: $gpa");
           print("CGPA calculated successfully: $cgpa");
           showDialog(
@@ -209,7 +202,7 @@ class _GpaCalculatorState extends State<GpaCalculator> {
               return AlertDialog(
                 title: Text('Success'),
                 content: Text(
-                    'Data sent successfully! Your GPA is ${gpa!.toStringAsFixed(2)}\nYour CGPA is ${cgpa!.toStringAsFixed(2)}'),
+                    'Data sent successfully! Your GPA is ${gpa?.toStringAsFixed(2) ?? 'N/A'}\nYour CGPA is ${cgpa?.toStringAsFixed(2) ?? 'N/A'}'),
                 actions: <Widget>[
                   TextButton(
                     child: Text('OK'),
@@ -375,7 +368,7 @@ class _GpaCalculatorState extends State<GpaCalculator> {
                         borderRadius: BorderRadius.circular(8.0),
                       ),
                       child: Text(
-                        'Your CGPA: ${cgpa!.toStringAsFixed(4)}',
+                        'Your CGPA: ${cgpa!.toStringAsFixed(2)}',
                         style: TextStyle(
                             fontSize: 24, fontWeight: FontWeight.bold),
                       ),

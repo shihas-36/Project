@@ -95,9 +95,11 @@ class _LoginPageState extends State<LoginPage> {
             Navigator.pushReplacementNamed(context, '/');
           },
         ),
-        backgroundColor: const Color(0xFF0D1B2A), // Set AppBar background color
+        backgroundColor: const Color.fromARGB(
+            255, 20, 53, 89), // Set AppBar background color
       ),
-      backgroundColor: const Color(0xFF0D1B2A), // Set background color
+      backgroundColor:
+          const Color.fromARGB(255, 20, 53, 89), // Set background color
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
