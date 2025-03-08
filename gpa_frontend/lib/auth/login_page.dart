@@ -16,6 +16,13 @@ class _LoginPageState extends State<LoginPage> {
   final storage = FlutterSecureStorage();
   bool _isLoading = false;
 
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   Future<void> _login() async {
     setState(() {
       _isLoading = true;
@@ -80,36 +87,176 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Login')),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _emailController,
-              decoration: InputDecoration(labelText: 'Email'),
-            ),
-            TextField(
-              controller: _passwordController,
-              decoration: InputDecoration(labelText: 'Password'),
-              obscureText: true,
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _login,
-              child: _isLoading ? CircularProgressIndicator() : Text('Login'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => SignUpPage()),
-                );
-              },
-              child: Text('Don\'t have an account? Sign Up'),
-            ),
-          ],
+      appBar: AppBar(
+        title: Text('Login'),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushReplacementNamed(context, '/');
+          },
         ),
+        backgroundColor: const Color(0xFF0D1B2A), // Set AppBar background color
+      ),
+      backgroundColor: const Color(0xFF0D1B2A), // Set background color
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // App Bar
+                Padding(
+                  padding: const EdgeInsets.only(top: 20.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Thqdu',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.menu,
+                          color: Colors.white,
+                          size: 32,
+                        ),
+                        onPressed: () {},
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 40),
+
+                // Login Title
+                const Text(
+                  'Login',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+
+                // Email Field
+                _buildTextField('Email', _emailController),
+
+                // Password Field
+                _buildTextField('Password', _passwordController,
+                    isPassword: true),
+
+                const SizedBox(height: 30),
+
+                // Login Button
+                Center(
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _login,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF8F0E3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 50, vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? CircularProgressIndicator()
+                        : const Text(
+                            'Login',
+                            style: TextStyle(
+                              color: Color(
+                                  0xFF6750A4), // Purple color for the login text
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Don't have an account text
+                Center(
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.pushReplacementNamed(context, '/signup');
+                    },
+                    child: RichText(
+                      text: const TextSpan(
+                        text: "Don't have an account? ",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: 'Sign Up',
+                            style: TextStyle(
+                              color: Color(
+                                  0xFF6750A4), // Purple color for Sign Up text
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Helper method to build text fields
+  Widget _buildTextField(
+    String placeholder,
+    TextEditingController controller, {
+    bool isPassword = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            placeholder,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 5),
+          TextField(
+            controller: controller,
+            obscureText: isPassword,
+            style: const TextStyle(color: Colors.black),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Color(0xFFF8F0E3),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.transparent, width: 1.0),
+                borderRadius: BorderRadius.circular(30.0),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.transparent, width: 2.0),
+                borderRadius: BorderRadius.circular(30.0),
+              ),
+              contentPadding:
+                  EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+            ),
+          ),
+        ],
       ),
     );
   }
