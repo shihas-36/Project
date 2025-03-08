@@ -63,11 +63,11 @@ class _GpaCalculatorState extends State<GpaCalculator> {
             (subjectsMap as Map<String, dynamic>).forEach((rawSubject, credit) {
               // Normalize subject keys
               String normalizedSubject = rawSubject
-                  .toLowerCase()
-                  .replaceAll(' ', '_')
-                  .replaceAll('&', '_and_') // Handle special characters
-                  .replaceAll(
-                      RegExp(r'[^a-z0-9_]'), ''); // Remove invalid chars
+                      .toLowerCase()
+                      .replaceAllMapped(' ', (match) => '_')
+                      .replaceAllMapped(
+                          '&', (match) => '_and_') // Handle special characters
+                  ; // Remove invalid chars
               normalizedSubjects[normalizedSubject] = credit as int;
             });
             return MapEntry(semesterKey, normalizedSubjects);
@@ -123,9 +123,9 @@ class _GpaCalculatorState extends State<GpaCalculator> {
               // Normalize subject keys to match subjectsCredits
               String normalizedSubject = subject['name']
                   .toLowerCase()
-                  .replaceAll(' ', '_')
-                  .replaceAll('&', '_and_')
-                  .replaceAll(RegExp(r'[^a-z0-9_]'), '');
+                  .replaceAllMapped(' ', (match) => '_')
+                  .replaceAllMapped('&', (match) => '_and_')
+                  .replaceAllMapped(RegExp(r'[^a-z0-9_]'), (match) => '');
 
               if (subjectsCredits[semesterKey]!
                   .containsKey(normalizedSubject)) {
@@ -176,7 +176,8 @@ class _GpaCalculatorState extends State<GpaCalculator> {
 
       Map<String, String?> formattedSubjectGrades = {
         for (var entry in semesterGrades[semester]!.entries)
-          entry.key.toLowerCase().replaceAll(' ', '_'): entry.value
+          entry.key.toLowerCase().replaceAllMapped(' ', (match) => '_'):
+              entry.value
       };
 
       final payload = json.encode({

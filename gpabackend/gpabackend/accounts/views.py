@@ -8,12 +8,11 @@ from .serializers import UserSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny  # Add this import
 
-
 class SignUpView(APIView):
     permission_classes = [AllowAny]  # Add this line
 
     def post(self, request):
-        required_fields = ['username', 'email', 'password', 'KTUID', 'semester']
+        required_fields = ['username', 'email', 'password', 'KTUID', 'semester', 'degree', 'targeted_cgpa']
         if not all(field in request.data for field in required_fields):
             return Response(
                 {'error': 'Missing required fields'},
@@ -32,10 +31,6 @@ class SignUpView(APIView):
             }, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
 
 class LoginView(APIView):
     def post(self, request):

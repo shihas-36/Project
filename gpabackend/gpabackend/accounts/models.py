@@ -25,6 +25,8 @@ class CustomUser(AbstractUser):
     is_honors = models.BooleanField(default=False)
     is_minor = models.BooleanField(default=False)  # New field
     is_let = models.BooleanField(default=False)  # New field
+    degree = models.CharField(max_length=10, blank=True, null=True)  # Add this line
+    targeted_cgpa = models.FloatField(null=True, blank=True)  # Add this line
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'KTUID', 'semester']
     objects = CustomUserManager()  # Add this line

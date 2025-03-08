@@ -5,94 +5,24 @@ from rest_framework import status
 from .models import Semester, Subject, Grade
 from rest_framework.permissions import AllowAny
 from accounts.models import CustomUser
+from .courses import CREDITS  # Import the credits from courses.py
+
 # Grade values mapping
 GRADE_VALUES = {
-    'S': 10, 'A': 9,'A+':8.5 ,'B+': 8,'B':7.5,'C+':7,'C':6.5,'D+':6,'P':5.5,'F':0
-
-}
-
-# Credits for each subject (can be moved to a database model if needed)
-CREDITS = {
-    'semester_1': {
-        'LINEAR ALGEBRA AND CALCULAS ': 4,
-        'ENGINEERING PHYSICS A ': 4,
-        'ENGINEERING CHEMISTRY ': 4,
-        'ENGINEERING MECHANICS': 3,
-        'ENGINEERING GRAPHICS ': 3,
-        'BASICS OF CIVIL & MECHANICAL ENGINEERING0 ': 4,
-        'BASICS OF ELECTRICAL & ELECTRONICS ENGINEERING ': 4,
-        'LIFE SKILLS': 0,
-        'ENGINEERING PHYSICS LAB ': 1,
-        'CIVIL & MECHANICAL WORKSHOP ':1,
-        'ELECTRICAL & ELECTRONICS WORKSHOP':1,
-    },
-    'semester_2': {
-        'VECTORCALCULUS , DIFFERENTIAL EQUATIONS AND TRANSFORMS ': 4,
-        'ENGINEERING PHYSICS A ': 4,
-        'ENGINEERING CHEMISTRY': 4,
-        'ENGINEERING MECHANICS': 3,
-        'ENGINEERING GRAPHICS': 3,
-        'BASICS OF CIVIL & MECHANICAL ENGINEERING ': 4,
-        'BASICS OF ELECTRICAL & ELECTRONICS ENGINEERING ': 4,
-        'PROFESSIONAL COMMUNICATION': 0,
-        'PROGRAMMING IN C': 4,
-        'ENGINEERING PHYSICS LAB': 1,
-        'ENGINEERING CHEMISTRY LAB ': 1,
-        'CIVIL & MECHANICAL WORKSHOP': 1,
-        'ELECTRICAL & ELECTRONICS WORKSHOP': 1,
-    },
-    'semester_3': {
-        'DISCRETE MATHEMATICAL STRUCTURES ': 4,
-        'DATA STRUCTURES': 4,
-        'LOGIC SYSTEM DESIGN ': 4,
-        'OBJECT ORIENTED PROGRAMMING USING JAVA': 4,
-        'DESIGN & ENGINEERING': 2,
-        'PROFESSIONAL ETHICS ': 2,
-        'SUSTAINABLE ENGINEERING ': 0,
-        'DATA STRUCTURES LAB ': 2,
-        'OBJECT ORIENTED PROGRAMMING LAB (IN JAVA)': 2,
-    },
-    'semester_4': {
-        'GRAPH THEORY': 4,
-        'COMPUTER ORGANISATION AND ARCHITECTURE ': 4,
-        'DATABASE MANAGEMENT SYSTEMS': 4,
-        'OPERATING SYSTEMS': 4,
-        'DESIGN & ENGINEERING': 2,
-        'PROFESSIONAL ETHICS': 2,
-        'CONSTITUTION OF INDIA': 0,
-        'DIGITAL LAB ': 2,
-        'OPERATING SYSTEMS LAB ': 2,
-    },
-    'semester_5': {
-        'FORMAL LANGUAGES AND AUTOMATA THEORY': 4,
-        'COMPUTER NETWORKS': 4,
-        'SYSTEM SOFTWARE ': 4,
-        'MICROPROCESSORS AND MICROCONTROLLERS ': 4,
-        'MANAGEMENT OF SOFTWARE SYSTEMS': 3,
-        'DISASTER MANAGEMENT': 0,
-        'SYSTEM SOFTWARE AND MICROPROCESSORS LAB ': 2,
-        'DATABASE MANAGEMENT SYSTEMS LAB ': 2,
-    },
-    'semester_6': {
-        'COMPILER DESIGN': 4,
-        'COMPUTER GRAPHICS AND IMAGE PROCESSING': 4,
-        'ALGORITHM ANA LYSIS AND DESIGN': 4,
-        'PROGRAM ELECTIVE I ': 3,
-        'INDUSTRIAL ECONOMICS & FOREIGN TRADE ': 3,
-        'COMPREHENSIVE COURSE WORK ': 1,
-        'NETWORKING LAB': 2,
-        'MINIPROJECT ':2
-    },
+    'S': 10, 'A': 9, 'A+': 8.5, 'B+': 8, 'B': 7.5, 'C+': 7, 'C': 6.5, 'D+': 6, 'P': 5.5, 'F': 0
 }
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_subjects(request):
     """
-    Returns the list of subjects and credits for each semester.
+    Returns the list of subjects and credits for each semester based on the user's degree.
     """
-    return Response(CREDITS)
-
+    user = request.user
+    degree = user.degree
+    if degree not in CREDITS:
+        return Response({'error': 'Invalid degree'}, status=status.HTTP_400_BAD_REQUEST)
+    return Response(CREDITS[degree])
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -177,12 +107,27 @@ def calculate_gpa(request):
         total_points = 0
 
         for subject_name, grade in grades.items():
+            # Normalize the subject name to match the keys in the CREDITS dictionary
+            normalized_subject_name = subject_name.strip().lower().replace(' ', '_').replace('&', '_and_')
+
+            # Get the credits for the subject
+            credits = CREDITS[user.degree].get(semester, {}).get(normalized_subject_name)
+            if credits is None:
+                return Response(
+                    {'error': f'Credits not found for subject {subject_name} in {semester}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             # Get or create the subject
             subject, _ = Subject.objects.get_or_create(
                 semester=semester_obj,
                 name=subject_name,
-                defaults={'credits': CREDITS.get(semester, {}).get(subject_name, 3)}
+                defaults={'credits': credits}
             )
+
+            # Ensure the subject credits are correctly set
+            subject.credits = credits
+            subject.save()
 
             Grade.objects.update_or_create(
                 subject=subject,

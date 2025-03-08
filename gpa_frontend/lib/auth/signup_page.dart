@@ -19,9 +19,12 @@ class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
   final TextEditingController _ktuidController = TextEditingController();
+  final TextEditingController _targetedCgpaController =
+      TextEditingController(); // Add this line
   final storage = FlutterSecureStorage();
 
   String? _selectedSemester;
+  String? _selectedDegree; // Add this line
   bool _isMinorSelected = false;
   bool _isLetSelected = false;
   bool _isHonorSelected = false;
@@ -66,6 +69,9 @@ class _SignUpPageState extends State<SignUpPage> {
                     isPassword: true),
                 _buildTextField(_ktuidController, 'KTUID'),
                 _buildSemesterDropdown(),
+                _buildDegreeDropdown(), // Add this line
+                _buildTextField(
+                    _targetedCgpaController, 'Targeted CGPA'), // Add this line
                 if (_showOptions) ...[
                   SizedBox(height: 20),
                   Text('Select Option:', style: TextStyle(fontSize: 16)),
@@ -171,6 +177,36 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
+  Widget _buildDegreeDropdown() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: DropdownButtonFormField<String>(
+        value: _selectedDegree,
+        decoration: InputDecoration(
+          labelText: 'Degree',
+          border: OutlineInputBorder(),
+        ),
+        items: ['CSE', 'CE', 'ME', 'EEE'].map((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(value),
+          );
+        }).toList(),
+        onChanged: (value) {
+          setState(() {
+            _selectedDegree = value;
+          });
+        },
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please select a degree';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
   Widget _buildCheckboxOption(
       String title, bool value, ValueChanged<bool?> onChanged) {
     return CheckboxListTile(
@@ -213,6 +249,8 @@ class _SignUpPageState extends State<SignUpPage> {
         'password': _passwordController.text,
         'KTUID': _ktuidController.text,
         'semester': int.parse(_selectedSemester ?? '1'),
+        'degree': _selectedDegree, // Add this line
+        'targeted_cgpa': _targetedCgpaController.text, // Add this line
         'is_minor': _isMinorSelected,
         'is_let': _isLetSelected,
         'is_honors': _isHonorSelected,
