@@ -1,9 +1,8 @@
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Semester, Subject, Grade
-from rest_framework.permissions import AllowAny
 from accounts.models import CustomUser
 from .courses import CREDITS  # Import the credits from courses.py
 
@@ -175,3 +174,56 @@ def calculate_gpa(request):
             {'error': f'An unexpected error occurred: {str(e)}'},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def calculate_grade(request):
+    try:
+        print("Request body:", request.data)  # Log request body
+        marks = request.data.get('marks')
+        if marks is None:
+            response_data = {'error': 'Marks are required'}
+            print("Response body:", response_data)  # Log response body
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            marks = float(marks)
+        except ValueError:
+            response_data = {'error': 'Invalid marks format'}
+            print("Response body:", response_data)  # Log response body
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+        
+        if marks < 0 or marks > 150:
+            response_data = {'error': 'Marks should be between 0 and 100'}
+            print("Response body:", response_data)  # Log response body
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+        
+        grade = None
+        if marks >= 135:
+            grade = 'S'
+        elif marks >= 127.5:
+            grade = 'A+'
+        elif marks >= 120:
+            grade = 'A'
+        elif marks >= 112.5:
+            grade = 'B+'
+        elif marks >= 105:
+            grade = 'B'
+        elif marks >= 97.5:
+            grade = 'C+'
+        elif marks >= 90:
+            grade = 'C'
+        elif marks >= 82.5:
+            grade = 'D+'
+        elif marks >= 75:
+            grade = 'P'
+        else:
+            grade = 'F'
+        
+        response_data = {'grade': grade}
+        print("Response body:", response_data)  # Log response body
+        return Response(response_data, status=status.HTTP_200_OK)
+    except Exception as e:
+        response_data = {'error': str(e)}
+        print("Response body:", response_data)  # Log response body
+        return Response(response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

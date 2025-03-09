@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:gpa_frontend/gpa.dart';
 import 'signup_page.dart'; // Import your GPA calculator page
+import 'package:gpa_frontend/start.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -53,7 +54,7 @@ class _LoginPageState extends State<LoginPage> {
         // Navigate to the main app page
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => GpaCalculator()),
+          MaterialPageRoute(builder: (context) => StartPage()),
         );
       } else {
         throw Exception('Failed to login: ${response.body}');
