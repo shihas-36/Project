@@ -1,4 +1,5 @@
-# Credits for each subject (can be moved to a database model if needed)
+from .minor import MINOR  # Import the MINOR section
+
 CREDITS = {
     'CSE': {
         'semester_1': {
@@ -71,6 +72,7 @@ CREDITS = {
             'NETWORKING LAB': 2,
             'MINIPROJECT': 2
         },
+
     },
     'CE': {
         'semester_1': {
@@ -104,7 +106,7 @@ CREDITS = {
             'INDUSTRIAL ECONOMICS & FOREIGN TRADE': 3,
             'COMPREHENSIVE COURSE WORK': 1,
             'NETWORKING LAB': 2,
-            'MINIPROJECT': 2
+            'MINIPROJECT': 2,
         },
         'semester_4': {
             'GRAPH THEORY': 4,
@@ -202,7 +204,8 @@ CREDITS = {
             'COMPREHENSIVE COURSE WORK': 1,
             'NETWORKING LAB': 2,
             'MINIPROJECT': 2
-        }
+        },
+     
     },
     'EEE': {
         'semester_1': {
@@ -268,22 +271,8 @@ CREDITS = {
             'COMPREHENSIVE COURSE WORK': 1,
             'NETWORKING LAB': 2,
             'MINIPROJECT': 2
-        }
+        },
+
     },
 }
 
-# Assuming this is a part of a web form or similar UI component
-
-# HTML or template code
-'''
-<form>
-    <!-- ...existing form fields... -->
-    <label for="are_you_let">Are you Let?</label>
-    <input type="radio" id="are_you_let" name="are_you_let" value="false" checked>
-    <br>
-    <label for="targeted_cgpa">Targeted CGPA:</label>
-    <input type="text" id="targeted_cgpa" name="targeted_cgpa" style="width: 50px; height: 50px;">
-    <br>
-    <button type="submit">Sign Up</button>
-</form>
-'''

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gpa_frontend/gpa.dart';
-import 'package:gpa_frontend/grade_calculator.dart';
+import 'package:gpa_frontend/grade.dart';
+import 'package:gpa_frontend/minor_calculator.dart'; // Import the new Minor Calculator page
 
 class StartPage extends StatelessWidget {
   @override
@@ -31,6 +32,17 @@ class StartPage extends StatelessWidget {
                 );
               },
               child: Text('Calculate Marks'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) =>
+                          MinorCalculatorPage()), // Navigate to Minor Calculator page
+                );
+              },
+              child: Text('Calculate Minor'),
             ),
           ],
         ),

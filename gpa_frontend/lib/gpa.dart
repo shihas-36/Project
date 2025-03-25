@@ -108,24 +108,16 @@ class _GpaCalculatorState extends State<GpaCalculator> {
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
+        debugPrint("Response data: $responseData",
+            wrapWidth: 2048); // Use debugPrint for long strings
         setState(() {
           cgpa = responseData['cgpa']?.toDouble();
           for (var semesterData in responseData['semesters']) {
             String semesterKey = semesterData['semester'];
             semesterGrades[semesterKey] = {};
             for (var subject in semesterData['subjects']) {
-              // Normalize subject keys to match subjectsCredits
-              String normalizedSubject = subject['name']
-                  .toLowerCase()
-                  .replaceAll(' ', '_')
-                  .replaceAll('&', '_and_')
-                  .replaceAll(RegExp(r'[^a-z0-9_]'), '');
-
-              if (subjectsCredits[semesterKey]!
-                  .containsKey(normalizedSubject)) {
-                semesterGrades[semesterKey]![normalizedSubject] =
-                    subject['grade'];
-              }
+              String subjectName = subject['name'];
+              semesterGrades[semesterKey]![subjectName] = subject['grade'];
             }
           }
         });

@@ -9,7 +9,11 @@ class Semester(models.Model):
     semester = models.CharField(max_length=20, default='semester_1')  # Use CharField with default value
     gpa = models.FloatField(null=True, blank=True)  # GPA for this semester
     cgpa = models.FloatField(null=True, blank=True)  # Cumulative GPA up to this semester
-
+    minor_gpa = models.FloatField(null=True, blank=True)    # SGPA with minor courses
+    minor_cgpa = models.FloatField(null=True, blank=True)    # SGPA with minor courses
+    total_credits = models.IntegerField(default=0)  # Add total_credits field
+    total_points = models.FloatField(default=0.0)  # Add total_points field
+    
     class Meta:
         unique_together = ('user', 'semester')  # Ensure unique semesters per user
 
@@ -20,7 +24,7 @@ class Subject(models.Model):
     """
     Model to store subjects and their credits for each semester.
     """
-    semester = models.ForeignKey(Semester, on_delete=models.CASCADE, related_name='subjects')
+    semester = models.ForeignKey(Semester, related_name='subjects', on_delete=models.CASCADE)
     name = models.CharField(max_length=100)  # e.g., "Physics", "Maths"
     credits = models.IntegerField()  # Credits for the subject
 
@@ -34,7 +38,7 @@ class Grade(models.Model):
     """
     Model to store grades for each subject in a semester.
     """
-    subject = models.OneToOneField(Subject, on_delete=models.CASCADE, related_name='grade')
+    subject = models.OneToOneField(Subject, related_name='grade', on_delete=models.CASCADE)
     grade = models.CharField(max_length=2, choices=[
         ('S', 'S'), ('A', 'A'), ('B', 'B'),
         ('C', 'C'), ('D', 'D'), ('F', 'F')
