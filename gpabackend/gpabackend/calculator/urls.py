@@ -9,4 +9,5 @@ urlpatterns = [
     path('calculate_minor/', views.calculate_minor, name='calculate_minor'),  # Add the new endpoint
     path('get_minor_subjects/', views.get_minor_subjects, name='get_minor_subjects'),  # Add the new endpoint
     path('check_minor_status/', views.check_minor_status, name='minor_stat'),  # Add the new endpoint
+    path("Summary/", views.summury, name="summury"),  # Fix the typo in the endpoint
 ]

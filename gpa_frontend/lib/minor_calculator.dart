@@ -122,11 +122,13 @@ class _MinorCalculatorPageState extends State<MinorCalculatorPage> {
                 }));
           }).cast<String, Map<String, Map<String, int>>>();
 
+          // Initialize controllers and fetch saved grades and SGPA
           _minorBuckets[_selectedMinorBucket]?.forEach((semester, subjects) {
             _selectedMinorSubjects[semester] = subjects.keys.first;
             subjects.forEach((subject, credits) {
               _gradeControllers[subject] = TextEditingController(text: 'S');
             });
+            _fetchSavedMinorData(semester, 'Minor'); // Fetch saved data
           });
 
           _honorBuckets[_selectedHonorBucket]?.forEach((semester, subjects) {
@@ -134,6 +136,7 @@ class _MinorCalculatorPageState extends State<MinorCalculatorPage> {
             subjects.forEach((subject, credits) {
               _gradeControllers[subject] = TextEditingController(text: 'S');
             });
+            _fetchSavedMinorData(semester, 'Honor'); // Fetch saved data
           });
         });
       } else {
@@ -158,6 +161,49 @@ class _MinorCalculatorPageState extends State<MinorCalculatorPage> {
           );
         },
       );
+    }
+  }
+
+  Future<void> _fetchSavedMinorData(String semester, String type) async {
+    try {
+      final token = await storage.read(key: 'auth_token');
+      if (token == null) throw Exception('No authentication token found');
+
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:8000/get_user_data/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        setState(() {
+          for (var semesterData in responseData['semesters']) {
+            if (semesterData['semester'] == semester) {
+              _sgpaMap[semester] = semesterData['minor_gpa']?.toDouble() ?? 0.0;
+              for (var subject in semesterData['subjects']) {
+                String subjectName = subject['name'];
+                String? grade = subject['grade'];
+                if (_gradeControllers.containsKey(subjectName)) {
+                  // Update the grade controller with the fetched grade
+                  _gradeControllers[subjectName]?.text = grade ?? 'S';
+                } else {
+                  // Initialize a new controller if it doesn't exist
+                  _gradeControllers[subjectName] = TextEditingController(
+                    text: grade ?? 'S',
+                  );
+                }
+              }
+            }
+          }
+        });
+      } else {
+        throw Exception(
+            'Failed to fetch saved minor data: ${response.statusCode}');
+      }
+    } catch (e) {
+      print("Error fetching saved minor data: $e");
     }
   }
 
@@ -234,7 +280,7 @@ class _MinorCalculatorPageState extends State<MinorCalculatorPage> {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min, // Add this to prevent unbounded height
+      mainAxisSize: MainAxisSize.min,
       children: [
         Center(
           child: DropdownButton<String>(
@@ -259,11 +305,10 @@ class _MinorCalculatorPageState extends State<MinorCalculatorPage> {
         ),
         SizedBox(height: 16),
         SizedBox(
-          height: 300, // Set a reasonable fixed height or calculate dynamically
+          height: 300,
           child: ListView.builder(
-            shrinkWrap: true, // Add this
-            physics:
-                ClampingScrollPhysics(), // Add this for better scrolling behavior
+            shrinkWrap: true,
+            physics: ClampingScrollPhysics(),
             itemCount: buckets[selectedBucket]?.length ?? 0,
             itemBuilder: (context, index) {
               String semester =
@@ -343,7 +388,7 @@ class _MinorCalculatorPageState extends State<MinorCalculatorPage> {
           child: _isMinorStudent || _isHonorStudent
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min, // Add this
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     if (_isMinorStudent) ...[
                       Text(
@@ -352,7 +397,7 @@ class _MinorCalculatorPageState extends State<MinorCalculatorPage> {
                             fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       _buildDropdowns('Minor'),
-                      SizedBox(height: 20), // Add some spacing between sections
+                      SizedBox(height: 20),
                     ],
                     if (_isHonorStudent) ...[
                       Text(
