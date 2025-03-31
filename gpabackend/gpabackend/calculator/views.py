@@ -10,7 +10,7 @@ from django.db.models import Max, Min, Count, Q  # Add this import
 cgpa=0
 # Grade values mapping
 GRADE_VALUES = {
-    'S': 10, 'A': 9, 'A+': 8.5, 'B+': 8, 'B': 7.5, 'C+': 7, 'C': 6.5, 'D+': 6, 'P': 5.5, 'F': 0
+    'S': 10, 'A+': 9, 'A': 8.5, 'B+': 8, 'B': 7.5, 'C+': 7, 'C': 6.5, 'D+': 6, 'P': 5.5, 'F': 0
 }
 
 @api_view(['GET'])
@@ -82,6 +82,7 @@ def get_user_data(request):
 @permission_classes([IsAuthenticated])
 def calculate_gpa(request):
     try:
+        print("Received request data:", request.data)  # Log the received request data
         data = request.data
         user = request.user
         semester = data.get('semester')
@@ -89,8 +90,17 @@ def calculate_gpa(request):
 
         # Validate semester
         if not semester or not isinstance(semester, str):
+            print("Invalid semester:", semester)  # Log invalid semester
             return Response(
                 {'error': 'Invalid semester'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Validate grades
+        if not isinstance(grades, dict):
+            print("Invalid grades format:", grades)  # Log invalid grades
+            return Response(
+                {'error': 'Invalid grades format'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -117,11 +127,31 @@ def calculate_gpa(request):
             semester=semester
         )
 
+        # Reset total_credits, total_points, and earn_credits
+        semester_obj.total_credits = 0
+        semester_obj.total_points = 0
+        semester_obj.earn_credits = 0
+
         for subject_name, grade in grades.items():
-            credits = CREDITS[user.degree].get(semester, {}).get(subject_name.strip())
+            # Validate subject and credits
+            credits = None
+            for slot, courses in CREDITS[user.degree].get(semester, {}).items():
+                if subject_name.strip() in courses:
+                    credits = courses[subject_name.strip()]
+                    break
+
             if credits is None:
+                print(f"Credits not found for subject '{subject_name}' in {semester}")  # Log missing credits
                 return Response(
                     {'error': f'Credits not found for subject "{subject_name}" in {semester}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Validate grade
+            if grade not in GRADE_VALUES:
+                print(f"Invalid grade '{grade}' for subject '{subject_name}'")  # Log invalid grade
+                return Response(
+                    {'error': f'Invalid grade "{grade}" for subject "{subject_name}"'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
@@ -140,11 +170,18 @@ def calculate_gpa(request):
             )
 
             if grade in GRADE_VALUES:
+                print("Grade:", GRADE_VALUES[grade]) 
+                
                 semester_obj.total_credits += subject.credits
-                semester_obj.total_points += GRADE_VALUES[grade] * subject.credits
+                gcredit = GRADE_VALUES[grade] * subject.credits
+                semester_obj.total_points += gcredit
+                
+                print(GRADE_VALUES[grade] ,"*", subject.credits,"=",gcredit)  # Log grade and credits
                 if grade != 'F':
                     semester_obj.earn_credits += subject.credits
-
+        print("Total credits:", semester_obj.total_credits)  # Log total credits
+        print("Total points:", semester_obj.total_points)  # Log total points   
+        print("Earned credits:", semester_obj.earn_credits)  # Log earned credits
         if semester_obj.total_credits == 0:
             return Response(
                 {'error': 'No valid grades provided'},
@@ -169,8 +206,6 @@ def calculate_gpa(request):
 
         user.cgpa = cgpa  # Update the user's CGPA
         user.save()
-        print("hii ",user.cgpa) # Save the user instance to the database
-
         print("CGPA:", user.cgpa)  # Log CGPA
         print("GPA and CGPA calculated successfully")  # Log successful calculation
         return Response({
@@ -415,16 +450,20 @@ def get_minor_subjects(request):
 def summury(request):
     user = request.user
     print("User:", user)
-    print("qwe",user.cgpa)  # Log the user
-    best_semester = user.semesters.aggregate(Max('gpa'))['gpa__max']  # Correct field name
-    worst_semester = user.semesters.aggregate(Min('gpa'))['gpa__min']  # Correct field name
-    topper_count = Subject.objects.filter(semester__user=user, grade__grade='S').count()  # Correct access to subjects
-    supply_count = Subject.objects.filter(semester__user=user, grade__grade='F').count()  # Correct access to subjects
+    print("User CGPA:", user.cgpa)  # Log the user's CGPA
+
+    # Safely aggregate best and worst semester GPAs
+    best_semester = user.semesters.aggregate(Max('gpa'))['gpa__max'] or 0.0
+    worst_semester = user.semesters.aggregate(Min('gpa'))['gpa__min'] or 0.0
+
+    # Count toppers and supply grades
+    topper_count = Subject.objects.filter(semester__user=user, grade__grade='S').count()
+    supply_count = Subject.objects.filter(semester__user=user, grade__grade='F').count()
 
     # Calculate total credits and earned credits
     semesters = Semester.objects.filter(user=user)
-    total_credits = [semester.total_credits for semester in semesters]
-    earned_credits = [semester.earn_credits for semester in semesters]
+    total_credits = [semester.total_credits or 0 for semester in semesters]
+    earned_credits = [semester.earn_credits or 0 for semester in semesters]
 
     # Calculate yearback required credits
     current_semester = int(user.semester.split('_')[-1])
@@ -433,35 +472,28 @@ def summury(request):
 
     if current_semester <= 4:
         first_two_semesters_total = sum(total_credits[:2])
-        print("First two semesters total credits:", first_two_semesters_total)  # Log first two semesters total credits
         first_two_semesters_earned = sum(earned_credits[:2])
-        print("First two semesters earned credits:", first_two_semesters_earned)  # Log first two semesters earned credits
         difference = first_two_semesters_total - first_two_semesters_earned
-        print("Difference:", difference)
-        yearback_required = 0 if difference > 17 else 17 - difference   
-        
+        yearback_required = max(0, 17 - difference)
     elif current_semester <= 6:
         first_four_semesters_total = sum(total_credits[:4])
         first_four_semesters_earned = sum(earned_credits[:4])
         difference = first_four_semesters_total - first_four_semesters_earned
-        yearback_required = 0 if difference > 41 else 41 - difference
+        yearback_required = max(0, 41 - difference)
 
     # Calculate SGPA required for upcoming semesters to achieve targeted CGPA
-    targeted_cgpa = user.targeted_cgpa
+    targeted_cgpa = user.targeted_cgpa or 0.0
     print("Targeted CGPA:", targeted_cgpa)  # Log targeted CGPA
     sgpa_required = None
     total_semesters = 8  # Assuming 8 semesters in total
     if targeted_cgpa and current_semester < total_semesters:
         remaining_semesters = total_semesters - current_semester
         print("Remaining semesters:", remaining_semesters)  # Log remaining semesters
-        cgpsum = user.cgpa  # Use the user's CGPA field, default to 0.0 if null
+        cgpsum = user.cgpa * current_semester  # Use the user's CGPA field
         print("CGPA sum:", cgpsum)
-        req=targeted_cgpa * total_semesters
-        print("Required CGPA:", req)
-        sgpa_required = (
-            ( req - cgpsum) 
-            / remaining_semesters
-        )
+        required_cgpa_sum = targeted_cgpa * total_semesters
+        print("Required CGPA sum:", required_cgpa_sum)
+        sgpa_required = (required_cgpa_sum - cgpsum) / remaining_semesters
         sgpa_required = round(sgpa_required, 2)
         print("SGPA required:", sgpa_required)  # Log SGPA required
 

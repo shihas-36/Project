@@ -1,37 +1,65 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class GradeCalculatorPage extends StatefulWidget {
   @override
   _GradeCalculatorPageState createState() => _GradeCalculatorPageState();
 }
 
-class _GradeCalculatorPageState extends State<GradeCalculatorPage> {
+class _GradeCalculatorPageState extends State<GradeCalculatorPage>
+    with TickerProviderStateMixin {
   final storage = FlutterSecureStorage();
-  Map<String, Map<String, int>> subjectsCredits = {};
-  Map<String, Map<String, String>> semesterGrades = {};
-  String currentSemester = 'semester_1';
+  late TabController _tabController;
+  Map<String, Map<String, Map<String, int>>> subjectsStructure = {};
+  Map<String, Map<String, String?>> selectedSubjects = {};
   bool isLoading = true;
   String? errorMessage;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 1, vsync: this);
     _initializeData();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _initializeData() async {
     try {
-      currentSemester =
-          await storage.read(key: 'current_semester') ?? 'semester_1';
+      final savedSemester = await storage.read(key: 'current_semester');
       await fetchSubjects();
+      if (savedSemester != null &&
+          subjectsStructure.containsKey(savedSemester)) {
+        _tabController = TabController(
+          length: subjectsStructure.length,
+          initialIndex: subjectsStructure.keys.toList().indexOf(savedSemester),
+          vsync: this,
+        );
+      } else {
+        _updateTabController();
+      }
     } catch (e) {
       setState(() {
         errorMessage = 'Initialization error: $e';
         isLoading = false;
       });
+    }
+  }
+
+  void _updateTabController() {
+    final newLength = subjectsStructure.keys.length;
+    if (_tabController.length != newLength) {
+      _tabController.dispose();
+      _tabController = TabController(
+        length: newLength,
+        vsync: this,
+      );
     }
   }
 
@@ -52,19 +80,34 @@ class _GradeCalculatorPageState extends State<GradeCalculatorPage> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as Map<String, dynamic>;
-        setState(() {
-          subjectsCredits = data.map((semesterKey, subjectsMap) {
-            return MapEntry(
-              semesterKey,
-              (subjectsMap as Map<String, dynamic>).map<String, int>(
-                (subject, credit) => MapEntry(subject, credit as int),
-              ),
-            );
-          });
 
-          // Initialize with default grade "S"
-          semesterGrades = subjectsCredits.map((semester, subjects) => MapEntry(
-              semester, subjects.map((subject, _) => MapEntry(subject, "S"))));
+        final parsedData = data.map<String, Map<String, Map<String, int>>>(
+            (semesterKey, semesterValue) {
+          final slots = (semesterValue as Map<String, dynamic>)
+              .map<String, Map<String, int>>((slotKey, slotValue) {
+            return MapEntry(
+                slotKey,
+                (slotValue as Map<String, dynamic>).map<String, int>(
+                  (subject, credit) =>
+                      MapEntry(subject, (credit as num).toInt()),
+                ));
+          });
+          return MapEntry(semesterKey, slots);
+        });
+
+        setState(() {
+          subjectsStructure = parsedData;
+          selectedSubjects = {};
+
+          // Initialize with first subject in each slot
+          parsedData.forEach((semester, slots) {
+            selectedSubjects[semester] = {};
+            slots.forEach((slot, courses) {
+              if (courses.isNotEmpty) {
+                selectedSubjects[semester]![slot] = courses.keys.first;
+              }
+            });
+          });
         });
       } else {
         throw Exception('Failed to load subjects: ${response.statusCode}');
@@ -79,7 +122,7 @@ class _GradeCalculatorPageState extends State<GradeCalculatorPage> {
     }
   }
 
-  void _showMarksDialog(String subject) {
+  void _showMarksDialog(String subject, String semester) {
     final TextEditingController internalController =
         TextEditingController(text: '0');
     final TextEditingController universityController =
@@ -127,34 +170,22 @@ class _GradeCalculatorPageState extends State<GradeCalculatorPage> {
                         if (token == null)
                           throw Exception('No authentication token found');
 
-                        final requestBody = json.encode({'marks': total});
-                        print(
-                            "Sent request to /calculate_grade with body: $requestBody"); // Log request body
-
                         final response = await http.post(
                           Uri.parse('http://10.0.2.2:8000/calculate_grade/'),
                           headers: {
                             'Content-Type': 'application/json',
                             'Authorization': 'Bearer $token',
                           },
-                          body: requestBody,
+                          body: json.encode({'marks': total}),
                         );
 
                         if (response.statusCode == 200) {
                           final result = json.decode(response.body);
-                          print(
-                              "Received response from /calculate_grade: $result"); // Log response body
-                          this.setState(() {
-                            semesterGrades[currentSemester]![subject] =
-                                result['grade'];
-                          });
                           Navigator.of(context).pop();
+                          _showGradeResultDialog(subject, result['grade']);
                         } else {
-                          final error = jsonDecode(response.body)['error'] ??
-                              'Unknown error';
-                          print(
-                              "Received error response from /calculate_grade: $error"); // Log error response
-                          throw Exception('Grade calculation failed: $error');
+                          throw Exception(
+                              'Grade calculation failed: ${response.statusCode}');
                         }
                       } catch (e) {
                         _showErrorDialog('Grade calculation failed: $e');
@@ -167,6 +198,24 @@ class _GradeCalculatorPageState extends State<GradeCalculatorPage> {
               ],
             );
           },
+        );
+      },
+    );
+  }
+
+  void _showGradeResultDialog(String subject, String grade) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Grade Result'),
+          content: Text('$subject: $grade'),
+          actions: [
+            TextButton(
+              child: Text('OK'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
         );
       },
     );
@@ -190,64 +239,73 @@ class _GradeCalculatorPageState extends State<GradeCalculatorPage> {
     );
   }
 
+  Widget _buildSemesterView(String semester) {
+    final slots = subjectsStructure[semester] ?? {};
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Text(
+            semester.replaceAll('_', ' ').toUpperCase(),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue[800],
+            ),
+          ),
+          SizedBox(height: 20),
+          ...slots.entries.map((slotEntry) {
+            final slotName = slotEntry.key;
+            final courses = slotEntry.value;
+            final currentSubject = selectedSubjects[semester]?[slotName];
+
+            return Card(
+              margin: EdgeInsets.symmetric(vertical: 8),
+              child: ListTile(
+                title: Text(currentSubject ?? 'No subject selected'),
+                subtitle: Text('Credits: ${courses[currentSubject] ?? 'N/A'}'),
+                trailing: currentSubject != null
+                    ? IconButton(
+                        icon: Icon(Icons.edit),
+                        onPressed: () =>
+                            _showMarksDialog(currentSubject, semester),
+                      )
+                    : null,
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final currentSubjects =
-        subjectsCredits[currentSemester]?.keys.toList() ?? [];
-
     return Scaffold(
       appBar: AppBar(
         title: Text('Grade Calculator'),
-        actions: [
-          DropdownButton<String>(
-            value: currentSemester,
-            items: subjectsCredits.keys.map((semester) {
-              return DropdownMenuItem(
-                value: semester,
-                child: Text(semester.replaceAll('_', ' ').toUpperCase()),
-              );
-            }).toList(),
-            onChanged: (value) {
-              if (value != null) {
-                setState(() => currentSemester = value);
-              }
-            },
-          ),
-        ],
+        bottom: subjectsStructure.isNotEmpty
+            ? TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                tabs: subjectsStructure.keys.map((semester) {
+                  return Tab(text: semester.replaceAll('_', ' ').toUpperCase());
+                }).toList(),
+              )
+            : null,
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : errorMessage != null
               ? Center(child: Text(errorMessage!))
-              : currentSubjects.isEmpty
-                  ? Center(child: Text('No subjects found for this semester'))
-                  : ListView.builder(
-                      itemCount: currentSubjects.length,
-                      itemBuilder: (context, index) {
-                        final subject = currentSubjects[index];
-                        final credits =
-                            subjectsCredits[currentSemester]![subject]!;
-                        final grade =
-                            semesterGrades[currentSemester]![subject]!;
-
-                        return ListTile(
-                          title: Text(subject),
-                          subtitle: Text('Credits: $credits'),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Chip(
-                                label: Text(grade),
-                                backgroundColor: Colors.blue[100],
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.edit),
-                                onPressed: () => _showMarksDialog(subject),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
+              : subjectsStructure.isEmpty
+                  ? Center(child: Text('No subjects found'))
+                  : TabBarView(
+                      controller: _tabController,
+                      children: subjectsStructure.keys.map((semester) {
+                        return _buildSemesterView(semester);
+                      }).toList(),
                     ),
     );
   }

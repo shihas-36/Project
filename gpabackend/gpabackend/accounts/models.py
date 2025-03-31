@@ -30,7 +30,8 @@ class CustomUser(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'KTUID', 'semester']
     objects = CustomUserManager()  # Add this line
-
+    cgpa = models.FloatField(null=True, blank=True)  # Cumulative GPA up to this semester
+    
     groups = models.ManyToManyField(
         'auth.Group',
         related_name='accounts_user_set',  # Added related_name

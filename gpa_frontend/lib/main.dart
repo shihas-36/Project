@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'auth/signup_page.dart';
 import 'auth/login_page.dart';
 import 'gpa.dart';
-import 'minor_calculator.dart';
+import 'minor.dart';
 
 void main() {
   runApp(MyApp());

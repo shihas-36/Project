@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:gpa_frontend/gpa.dart';
 import 'package:gpa_frontend/grade.dart';
-import 'package:gpa_frontend/minor_calculator.dart'; // Import the new Minor Calculator page
+import 'package:gpa_frontend/minor.dart'; // Import the new Minor Calculator page
+import "package:gpa_frontend/summary.dart"; // Import the new Summary page
 
 class StartPage extends StatelessWidget {
   @override
@@ -38,11 +39,21 @@ class StartPage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) =>
-                          MinorCalculatorPage()), // Navigate to Minor Calculator page
+                      builder: (context) => MinorCalculatorPage()),
                 );
               },
               child: Text('Calculate Minor'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) =>
+                          SummaryPage()), // Navigate to Summary page
+                );
+              },
+              child: Text('View Summary'),
             ),
           ],
         ),
