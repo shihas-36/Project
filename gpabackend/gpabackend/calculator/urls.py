@@ -9,7 +9,7 @@ urlpatterns = [
     path('calculate_minor/', views.calculate_minor, name='calculate_minor'),  # Add the new endpoint
     path('get_minor_subjects/', views.get_minor_subjects, name='get_minor_subjects'),  # Add the new endpoint
     path('check_minor_status/', views.check_minor_status, name='minor_stat'),  # Add the new endpoint
-    path("summary/", views.summury, name="summary"),  # Fixed typo in endpoint and name
+    path("Summary/", views.summury, name="summary"),  # Fixed typo in endpoint and name
     path('export-pdf/', views.export_gpa_data, name='export_gpa_pdf'),  # Corrected function name
     path('fetch_students_by_faculty/', views.fetch_students_by_faculty, name='faculty'),  # Add the new endpoint
-]
+]   

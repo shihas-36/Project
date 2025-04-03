@@ -14,11 +14,16 @@ class ExportPage extends StatelessWidget {
 
   Future<void> fetchAndGeneratePDF(BuildContext context) async {
     try {
+      // Determine the base URL dynamically
+      final baseUrl = Platform.isAndroid
+          ? 'http://10.0.2.2:8000' // Emulator
+          : 'http://192.168.1.100:8000'; // Replace with your machine's IP for physical devices
+
       // Fetch GPA data from the Django API
       final token = await storage.read(key: 'auth_token');
       if (token == null) throw Exception('No authentication token found');
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8000/export-pdf/'), // Updated URL
+        Uri.parse('$baseUrl/export-pdf/'),
         headers: {
           'Authorization': 'Bearer $token',
         },
