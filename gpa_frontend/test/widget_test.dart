@@ -8,15 +8,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:gpa_frontend/gpa.dart';
+import 'package:gpa_frontend/main.dart'; // Correct import for MyApp
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+    await tester
+        .pumpWidget(MyApp()); // Remove `const` if MyApp is not a const widget.
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
+    // Verify that the app starts with the LoginPage.
+    expect(find.byType(LoginPage), findsOneWidget);
     expect(find.text('1'), findsNothing);
 
     // Tap the '+' icon and trigger a frame.

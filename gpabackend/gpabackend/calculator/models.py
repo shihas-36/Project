@@ -49,3 +49,19 @@ class Grade(models.Model):
 
     def __str__(self):
         return f"{self.subject.name} - {self.grade}"
+
+class GradeDetail(models.Model):
+    """
+    Model to store detailed grade information for each subject.
+    This is separate from the main Grade model to avoid overwriting GPA-related data.
+    """
+    subject = models.ForeignKey(Subject, related_name='grade_details', on_delete=models.CASCADE)
+    marks = models.FloatField()  # Store the marks for the subject
+    grade = models.CharField(max_length=2, choices=[
+        ('S', 'S'), ('A+', 'A+'), ('A', 'A'), ('B+', 'B+'),
+        ('B', 'B'), ('C+', 'C+'), ('C', 'C'), ('D+', 'D+'),
+        ('P', 'P'), ('F', 'F')
+    ])  # Grade for the subject
+
+    def __str__(self):
+        return f"{self.subject.name} - Marks: {self.marks}, Grade: {self.grade}"

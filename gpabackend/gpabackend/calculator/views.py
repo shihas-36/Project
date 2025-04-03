@@ -2,11 +2,16 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Semester, Subject, Grade
+from .models import Semester, Subject, Grade, GradeDetail
 from accounts.models import CustomUser
 from .courses import CREDITS
 from .minor import MINOR, HONOR  # Import the credits from minor.py
 from django.db.models import Max, Min, Count, Q  # Add this import
+from django.http import HttpResponse
+from subprocess import run, PIPE  # To execute Dart script
+import json
+from django.http import JsonResponse
+
 cgpa=0
 # Grade values mapping
 GRADE_VALUES = {
@@ -221,28 +226,32 @@ def calculate_gpa(request):
         )
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def calculate_grade(request):
     try:
         print("Request body:", request.data)  # Log request body
         marks = request.data.get('marks')
-        if marks is None:
-            response_data = {'error': 'Marks are required'}
+        subject_name = request.data.get('subject')  # Get subject name from request
+        semester_name = request.data.get('semester')  # Get semester name from request
+
+        if marks is None or not subject_name or not semester_name:
+            response_data = {'error': 'Marks, subject, and semester are required'}
             print("Response body:", response_data)  # Log response body
             return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
-        
+
         try:
             marks = float(marks)
         except ValueError:
             response_data = {'error': 'Invalid marks format'}
             print("Response body:", response_data)  # Log response body
             return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
-        
+
         if marks < 0 or marks > 150:
-            response_data = {'error': 'Marks should be between 0 and 100'}
+            response_data = {'error': 'Marks should be between 0 and 150'}
             print("Response body:", response_data)  # Log response body
             return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
-        
+
+        # Determine grade based on marks
         grade = None
         if marks >= 135:
             grade = 'S'
@@ -264,10 +273,27 @@ def calculate_grade(request):
             grade = 'P'
         else:
             grade = 'F'
-        
-        response_data = {'grade': grade}
+
+        # Save the grade in the new GradeDetail model
+        user = request.user
+        semester, _ = Semester.objects.get_or_create(user=user, semester=semester_name)
+        subject, _ = Subject.objects.get_or_create(semester=semester, name=subject_name.strip())
+
+        # Create or update a GradeDetail object
+        GradeDetail.objects.update_or_create(
+            subject=subject,
+            defaults={'marks': marks, 'grade': grade}
+        )
+
+        response_data = {
+            'subject': subject_name,
+            'semester': semester_name,
+            'marks': marks,
+            'grade': grade
+        }
         print("Response body:", response_data)  # Log response body
         return Response(response_data, status=status.HTTP_200_OK)
+
     except Exception as e:
         response_data = {'error': str(e)}
         print("Response body:", response_data)  # Log response body
@@ -508,3 +534,71 @@ def summury(request):
         'yearback_required': yearback_required,
         'sgpa_required': sgpa_required
     }, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def export_gpa_data(request):
+    """API view to export GPA data for PDF generation."""
+    try:
+        user = request.user
+        
+        # Prepare user data
+        user_data = {
+            'name': user.get_full_name(),
+            'degree': user.degree,
+            'current_semester': user.semester,
+            'cgpa': user.cgpa,
+        }
+        
+        # Prepare semester data
+        semesters = []
+        for semester in Semester.objects.filter(user=user).prefetch_related('subjects__grade'):
+            subjects = []
+            for subject in semester.subjects.all():
+                subjects.append({
+                    'name': subject.name,
+                    'credits': subject.credits,
+                    'grade': subject.grade.grade if subject.grade else 'N/A'
+                })
+            
+            semesters.append({
+                'semester': semester.semester,
+                'gpa': semester.gpa or 'N/A',
+                'subjects': subjects
+            })
+        
+        return Response({
+            'user': user_data,
+            'semesters': semesters
+        })
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def fetch_students_by_faculty(request):
+    try:
+        user = request.user
+        if not hasattr(user, 'college_code') or not user.college_code:
+            return Response({'error': 'Faculty does not have valid college code'}, 
+                         status=status.HTTP_400_BAD_REQUEST)
+
+        students = CustomUser.objects.filter(
+            KTUID__icontains=user.college_code,  # Changed field name
+            is_faculty=False
+        )
+
+        student_data = [
+            {
+                'name': student.get_full_name(),
+                'KTUID': student.KTUID,  # Changed field name
+                'degree': student.degree,
+                'semester': student.semester,
+                'cgpa': student.cgpa
+            }
+            for student in students
+        ]
+
+        return Response({'students': student_data}, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

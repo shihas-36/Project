@@ -16,6 +16,18 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(email, password, **extra_fields)
 
+    def create_faculty(self, email, password=None, **extra_fields):
+        """
+        Create and return a faculty user with default values for non-faculty fields.
+        """
+        extra_fields.setdefault('is_faculty', True)
+        extra_fields.setdefault('KTUID', None)  # Default value for KTUID
+        extra_fields.setdefault('semester', None)  # Default value for semester
+        extra_fields.setdefault('degree', None)  # Default value for degree
+        extra_fields.setdefault('targeted_cgpa', None)  # Default value for targeted_cgpa
+
+        return self.create_user(email, password, **extra_fields)
+
 
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
@@ -27,6 +39,8 @@ class CustomUser(AbstractUser):
     is_let = models.BooleanField(default=False)  # New field
     degree = models.CharField(max_length=10, blank=True, null=True)  # Add this line
     targeted_cgpa = models.FloatField(null=True, blank=True)  # Add this line
+    is_faculty = models.BooleanField(default=False)  # Add this field to identify faculty users
+    college_code = models.CharField(max_length=3, blank=True, null=True)  # Add this field for faculty college code
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'KTUID', 'semester']
     objects = CustomUserManager()  # Add this line

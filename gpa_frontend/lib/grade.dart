@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:collection';
 
 class GradeCalculatorPage extends StatefulWidget {
   @override
@@ -14,8 +15,20 @@ class _GradeCalculatorPageState extends State<GradeCalculatorPage>
   late TabController _tabController;
   Map<String, Map<String, Map<String, int>>> subjectsStructure = {};
   Map<String, Map<String, String?>> selectedSubjects = {};
+  Map<String, Map<String, String?>> selectedGrades = {};
+  Map<String, Map<String, String?>> gradeResults =
+      {}; // semester -> subject -> grade
   bool isLoading = true;
   String? errorMessage;
+  final Map<String, int> gradeValues = {
+    'A+': 10,
+    'A': 9,
+    'B+': 8,
+    'B': 7,
+    'C': 6,
+    'D': 5,
+    'F': 0,
+  };
 
   @override
   void initState() {
@@ -85,12 +98,16 @@ class _GradeCalculatorPageState extends State<GradeCalculatorPage>
             (semesterKey, semesterValue) {
           final slots = (semesterValue as Map<String, dynamic>)
               .map<String, Map<String, int>>((slotKey, slotValue) {
+            // Deduplicate courses
+            final courses =
+                (slotValue as Map<String, dynamic>).map<String, int>(
+              (subject, credit) => MapEntry(subject, (credit as num).toInt()),
+            );
+
             return MapEntry(
                 slotKey,
-                (slotValue as Map<String, dynamic>).map<String, int>(
-                  (subject, credit) =>
-                      MapEntry(subject, (credit as num).toInt()),
-                ));
+                LinkedHashMap.fromEntries(
+                    courses.entries.toSet().toList())); // Remove duplicates
           });
           return MapEntry(semesterKey, slots);
         });
@@ -98,10 +115,12 @@ class _GradeCalculatorPageState extends State<GradeCalculatorPage>
         setState(() {
           subjectsStructure = parsedData;
           selectedSubjects = {};
+          selectedGrades = {};
 
           // Initialize with first subject in each slot
           parsedData.forEach((semester, slots) {
             selectedSubjects[semester] = {};
+            selectedGrades[semester] = {};
             slots.forEach((slot, courses) {
               if (courses.isNotEmpty) {
                 selectedSubjects[semester]![slot] = courses.keys.first;
@@ -176,13 +195,18 @@ class _GradeCalculatorPageState extends State<GradeCalculatorPage>
                             'Content-Type': 'application/json',
                             'Authorization': 'Bearer $token',
                           },
-                          body: json.encode({'marks': total}),
+                          body: json.encode({
+                            'marks': total,
+                            'subject': subject, // Include subject
+                            'semester': semester // Include semester
+                          }),
                         );
 
                         if (response.statusCode == 200) {
                           final result = json.decode(response.body);
                           Navigator.of(context).pop();
-                          _showGradeResultDialog(subject, result['grade']);
+                          _showGradeResultDialog(
+                              subject, result['grade'], semester);
                         } else {
                           throw Exception(
                               'Grade calculation failed: ${response.statusCode}');
@@ -203,7 +227,12 @@ class _GradeCalculatorPageState extends State<GradeCalculatorPage>
     );
   }
 
-  void _showGradeResultDialog(String subject, String grade) {
+  void _showGradeResultDialog(String subject, String grade, String semester) {
+    setState(() {
+      gradeResults[semester] ??= {};
+      gradeResults[semester]![subject] = grade;
+    });
+
     showDialog(
       context: context,
       builder: (context) {
@@ -239,6 +268,100 @@ class _GradeCalculatorPageState extends State<GradeCalculatorPage>
     );
   }
 
+  Widget _buildCourseCard(
+      String semester, String slot, Map<String, int> courses) {
+    final currentSubject = selectedSubjects[semester]?[slot];
+    final validSubject = courses.containsKey(currentSubject)
+        ? currentSubject
+        : (courses.isNotEmpty ? courses.keys.first : null);
+
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 8),
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.white, Colors.blue[50]!],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 2,
+            blurRadius: 5,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: courses.isEmpty
+                ? Text(
+                    'No courses available',
+                    style: TextStyle(color: Colors.black, fontSize: 16),
+                  )
+                : DropdownButton<String>(
+                    value: validSubject,
+                    isExpanded: true,
+                    underline: Container(),
+                    style: TextStyle(fontSize: 16, color: Colors.black),
+                    items: [
+                      ...Set.from(courses.keys).map((course) {
+                        // Use Set.from to remove duplicates
+                        return DropdownMenuItem<String>(
+                          value: course,
+                          child: Text(course),
+                        );
+                      }),
+                    ],
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() {
+                        selectedSubjects[semester] ??= {};
+
+                        final prev = selectedSubjects[semester]![slot];
+                        if (prev != null) {
+                          selectedGrades[semester]?.remove(prev);
+                          gradeResults[semester]?.remove(
+                              prev); // Clear grade when changing subject
+                        }
+
+                        selectedSubjects[semester]![slot] = value;
+                      });
+                    },
+                  ),
+          ),
+          if (validSubject != null)
+            Container(
+              width: 80,
+              height: 40,
+              margin: EdgeInsets.only(left: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: Colors.grey[300]!),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.2),
+                    spreadRadius: 2,
+                    blurRadius: 5,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: TextButton(
+                onPressed: () => _showMarksDialog(validSubject!, semester),
+                child: SizedBox.shrink(),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSemesterView(String semester) {
     final slots = subjectsStructure[semester] ?? {};
 
@@ -255,26 +378,35 @@ class _GradeCalculatorPageState extends State<GradeCalculatorPage>
             ),
           ),
           SizedBox(height: 20),
+
+          // Display grade results
+          if (gradeResults[semester]?.isNotEmpty ?? false)
+            Column(
+              children: [
+                Text(
+                  'Grade Results',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                ...gradeResults[semester]!.entries.map((entry) => ListTile(
+                      title: Text(entry.key),
+                      trailing: Text(entry.value ?? ''),
+                    )),
+                Divider(),
+              ],
+            ),
+
           ...slots.entries.map((slotEntry) {
             final slotName = slotEntry.key;
             final courses = slotEntry.value;
-            final currentSubject = selectedSubjects[semester]?[slotName];
 
-            return Card(
-              margin: EdgeInsets.symmetric(vertical: 8),
-              child: ListTile(
-                title: Text(currentSubject ?? 'No subject selected'),
-                subtitle: Text('Credits: ${courses[currentSubject] ?? 'N/A'}'),
-                trailing: currentSubject != null
-                    ? IconButton(
-                        icon: Icon(Icons.edit),
-                        onPressed: () =>
-                            _showMarksDialog(currentSubject, semester),
-                      )
-                    : null,
-              ),
-            );
-          }),
+            // Debug print to verify rendering
+            print('Rendering slot $slotName with courses: ${courses.keys}');
+
+            return _buildCourseCard(semester, slotName, courses);
+          }).toList(),
         ],
       ),
     );

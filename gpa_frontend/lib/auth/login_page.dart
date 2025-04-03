@@ -5,6 +5,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:gpa_frontend/gpa.dart';
 import 'signup_page.dart'; // Import your GPA calculator page
 import 'package:gpa_frontend/start.dart';
+import 'choose_signup_page.dart';
+import 'package:gpa_frontend/faculty.dart'; // Import your Faculty page
 
 class LoginPage extends StatefulWidget {
   @override
@@ -51,11 +53,39 @@ class _LoginPageState extends State<LoginPage> {
         await storage.write(key: 'auth_token', value: accessToken);
         await storage.write(key: 'refresh_token', value: refreshToken);
 
-        // Navigate to the main app page
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => StartPage()),
+        // Fetch is_faculty status
+        final isFacultyResponse = await http.get(
+          Uri.parse('http://10.0.2.2:8000/api/is_faculty/'),
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+            'Content-Type': 'application/json',
+          },
         );
+
+        if (isFacultyResponse.statusCode == 200) {
+          final isFacultyData = json.decode(isFacultyResponse.body);
+          final isFaculty = isFacultyData['is_faculty'] ?? false;
+
+          // Navigate based on user type
+          if (isFaculty) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => FacultyPage(), // Navigate to FacultyPage
+              ),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => StartPage(), // Navigate to StartPage
+              ),
+            );
+          }
+        } else {
+          throw Exception(
+              'Failed to fetch user type: ${isFacultyResponse.body}');
+        }
       } else {
         throw Exception('Failed to login: ${response.body}');
       }
@@ -108,29 +138,12 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // App Bar
-                Padding(
-                  padding: const EdgeInsets.only(top: 20.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Thqdu',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.menu,
-                          color: Colors.white,
-                          size: 32,
-                        ),
-                        onPressed: () {},
-                      ),
-                    ],
+                // Logo
+                Center(
+                  child: Image.asset(
+                    'assets/Edula.png', // Path to your logo
+                    width: 150, // Adjust the width as needed
+                    height: 150, // Adjust the height as needed
                   ),
                 ),
                 const SizedBox(height: 40),
@@ -188,7 +201,11 @@ class _LoginPageState extends State<LoginPage> {
                 Center(
                   child: TextButton(
                     onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/signup');
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => ChooseSignupPage()),
+                      );
                     },
                     child: RichText(
                       text: const TextSpan(
