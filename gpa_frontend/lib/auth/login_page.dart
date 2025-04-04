@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:gpa_frontend/gpa.dart';
 import 'signup_page.dart'; // Import your GPA calculator page
 import 'package:gpa_frontend/start.dart';
+import 'package:gpa_frontend/admin.dart'; // Import your ChooseSignupPage
 import 'choose_signup_page.dart';
 import 'package:gpa_frontend/faculty.dart'; // Import your Faculty page
 
@@ -41,50 +42,62 @@ class _LoginPageState extends State<LoginPage> {
         }),
       );
 
-      // Debugging: Print backend response
-      print("Backend response: ${response.statusCode} ${response.body}");
-
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         final accessToken = responseData['access'];
-        final refreshToken = responseData['refresh'];
 
-        // Store the tokens securely
+        // Store tokens
         await storage.write(key: 'auth_token', value: accessToken);
-        await storage.write(key: 'refresh_token', value: refreshToken);
+        await storage.write(
+            key: 'refresh_token', value: responseData['refresh']);
 
-        // Fetch is_faculty status
-        final isFacultyResponse = await http.get(
-          Uri.parse('http://10.0.2.2:8000/api/is_faculty/'),
+        // First check superuser status via API
+        final isSuperuserResponse = await http.get(
+          Uri.parse('http://10.0.2.2:8000/api/is_admin/'),
           headers: {
             'Authorization': 'Bearer $accessToken',
             'Content-Type': 'application/json',
           },
         );
 
-        if (isFacultyResponse.statusCode == 200) {
-          final isFacultyData = json.decode(isFacultyResponse.body);
-          final isFaculty = isFacultyData['is_faculty'] ?? false;
+        if (isSuperuserResponse.statusCode == 200) {
+          final superuserData = json.decode(isSuperuserResponse.body);
+          final isSuperuser = superuserData['is_superuser'] ?? false;
 
-          // Navigate based on user type
-          if (isFaculty) {
+          if (isSuperuser) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => AdminDashboardPage()),
+            );
+            return;
+          }
+
+          // If not superuser, check faculty status
+          final isFacultyResponse = await http.get(
+            Uri.parse('http://10.0.2.2:8000/api/is_faculty/'),
+            headers: {
+              'Authorization': 'Bearer $accessToken',
+              'Content-Type': 'application/json',
+            },
+          );
+
+          if (isFacultyResponse.statusCode == 200) {
+            final isFacultyData = json.decode(isFacultyResponse.body);
+            final isFaculty = isFacultyData['is_faculty'] ?? false;
+
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => FacultyPage(), // Navigate to FacultyPage
+                builder: (context) => isFaculty ? FacultyPage() : StartPage(),
               ),
             );
           } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => StartPage(), // Navigate to StartPage
-              ),
-            );
+            throw Exception(
+                'Failed to fetch faculty status: ${isFacultyResponse.body}');
           }
         } else {
           throw Exception(
-              'Failed to fetch user type: ${isFacultyResponse.body}');
+              'Failed to fetch superuser status: ${isSuperuserResponse.body}');
         }
       } else {
         throw Exception('Failed to login: ${response.body}');

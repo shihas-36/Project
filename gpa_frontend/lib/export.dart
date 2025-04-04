@@ -12,22 +12,25 @@ class ExportPage extends StatelessWidget {
   final storage =
       FlutterSecureStorage(); // Added missing storage initialization
 
-  Future<void> fetchAndGeneratePDF(BuildContext context) async {
+  Future<void> fetchAndGeneratePDF(BuildContext context, String ktuid) async {
     try {
       // Determine the base URL dynamically
       final baseUrl = Platform.isAndroid
           ? 'http://10.0.2.2:8000' // Emulator
           : 'http://192.168.1.100:8000'; // Replace with your machine's IP for physical devices
 
-      // Fetch GPA data from the Django API
+      // Fetch GPA data for the specific student from the Django API
       final token = await storage.read(key: 'auth_token');
       if (token == null) throw Exception('No authentication token found');
-      final response = await http.get(
+      final response = await http.post(
         Uri.parse('$baseUrl/export-pdf/'),
         headers: {
           'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
         },
+        body: json.encode({'ktuid': ktuid}), // Pass the KTUID to the backend
       );
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
@@ -36,13 +39,13 @@ class ExportPage extends StatelessWidget {
 
         // Save the PDF locally
         final dir = await getApplicationDocumentsDirectory();
-        final file = File('${dir.path}/gpa_report.pdf');
+        final file = File('${dir.path}/$ktuid-gpa-report.pdf');
         await file.writeAsBytes(pdf);
 
         // Open the PDF
         await OpenFile.open(file.path);
       } else {
-        throw Exception('Failed to fetch data from API');
+        throw Exception('Failed to fetch data from API: ${response.body}');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -59,7 +62,10 @@ class ExportPage extends StatelessWidget {
       ),
       body: Center(
         child: ElevatedButton(
-          onPressed: () => fetchAndGeneratePDF(context),
+          onPressed: () {
+            // Replace 'exampleKtuid' with the actual KTUID
+            fetchAndGeneratePDF(context, 'exampleKtuid');
+          },
           child: const Text('Export to PDF'),
         ),
       ),

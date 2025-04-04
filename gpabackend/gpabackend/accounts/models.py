@@ -62,3 +62,20 @@ class CustomUser(AbstractUser):
     )
     def __str__(self):
         return self.email
+    
+class Notification(models.Model):
+    """
+    Model to store notifications for users.
+    """
+    recipient = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='notifications')
+    sender = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True)
+    header = models.CharField(max_length=200)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.header} - {self.recipient.email}"

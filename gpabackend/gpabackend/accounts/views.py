@@ -8,6 +8,10 @@ from .serializers import UserSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny  # Correct import statement
 from rest_framework.permissions import IsAuthenticated  # Import IsAuthenticated
+from django.db import models
+from django.db.models import Q
+from django.core.exceptions import ValidationError
+from rest_framework.decorators import api_view, permission_classes
 
 class SignUpView(APIView):
     permission_classes = [AllowAny]  # Add this line
@@ -61,6 +65,7 @@ class LoginView(APIView):
                 'access': str(refresh.access_token),
                 'refresh': str(refresh),
                 'is_faculty': user.is_faculty,
+                'is_superuser': user.is_superuser,  # Add this line
                 'user_id': user.id,
                 'email': user.email,
             }
@@ -138,3 +143,124 @@ class IsFacultyView(APIView):
         }
         print("Response data:", response_data)  # Log the response
         return Response(response_data, status=status.HTTP_200_OK)
+
+
+class IsAdminView(APIView):
+    permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
+
+    def get(self, request):
+        user = request.user  # Get the authenticated user
+        print(f"Fetching is_faculty status for user: {user.email}")  # Log user details
+
+        response_data = {
+            'user_id': user.id,
+            'email': user.email,
+            'is_superuser': user.is_superuser,  # Return the is_faculty status
+        }
+        print("Response data:", response_data)  # Log the response
+        return Response(response_data, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def increment_semester(request):
+    if not request.user.is_superuser:
+        return Response({'error': 'Permission denied'}, status=403)
+    
+    try:
+        # Increment semester for students who are not faculty and have a semester < 8
+        updated = CustomUser.objects.filter(
+            is_faculty=False,
+            semester__lt='8'  # Assuming semester is stored as a CharField
+        ).update(
+            semester=models.Case(
+                models.When(semester='1', then=models.Value('2')),
+                models.When(semester='2', then=models.Value('3')),
+                models.When(semester='3', then=models.Value('4')),
+                models.When(semester='4', then=models.Value('5')),
+                models.When(semester='5', then=models.Value('6')),
+                models.When(semester='6', then=models.Value('7')),
+                models.When(semester='7', then=models.Value('8')),
+                default=models.F('semester')
+            )
+        )
+        
+        return Response({
+            'success': True,
+            'updated_count': updated
+        })
+    except Exception as e:
+        return Response({'error': str(e)}, status=400)
+
+from .models import Notification
+from rest_framework import serializers
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['id', 'header', 'content', 'created_at', 'is_read']
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_notifications(request):
+    try:
+        notifications = Notification.objects.filter(
+            recipient=request.user
+        ).order_by('-created_at')
+        serializer = NotificationSerializer(notifications, many=True)
+        return Response(serializer.data)
+    except Exception as e:
+        return Response({'error': str(e)}, status=400)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def mark_as_read(request, notification_id):
+    try:
+        notification = Notification.objects.get(
+            id=notification_id,
+            recipient=request.user
+        )
+        notification.is_read = True
+        notification.save()
+        return Response({'success': True})
+    except Notification.DoesNotExist:
+        return Response({'error': 'Notification not found'}, status=404)
+    except Exception as e:
+        return Response({'error': str(e)}, status=400)
+
+# Update your existing send_notification view
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def send_notification(request):
+    if not request.user.is_superuser:
+        return Response({'error': 'Permission denied'}, status=403)
+    
+    header = request.data.get('header')
+    content = request.data.get('content')
+    
+    if not header or not content:
+        return Response({'error': 'Both header and content are required'}, status=400)
+    
+    try:
+        # Get all active users (students and faculty)
+        users = CustomUser.objects.filter(is_active=True)
+        
+        # Create notifications for each user
+        notifications = [
+            Notification(
+                recipient=user,
+                sender=request.user,
+                header=header,
+                content=content
+            )
+            for user in users
+        ]
+        Notification.objects.bulk_create(notifications)
+        
+        return Response({
+            'success': True,
+            'message': f'Notification sent to {users.count()} users'
+        })
+    except Exception as e:
+        return Response({'error': str(e)}, status=400)

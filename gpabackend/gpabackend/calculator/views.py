@@ -477,6 +477,7 @@ def summury(request):
     user = request.user
     print("User:", user)
     print("User CGPA:", user.cgpa)  # Log the user's CGPA
+   
 
     # Safely aggregate best and worst semester GPAs
     best_semester = user.semesters.aggregate(Max('gpa'))['gpa__max'] or 0.0
@@ -490,22 +491,26 @@ def summury(request):
     semesters = Semester.objects.filter(user=user)
     total_credits = [semester.total_credits or 0 for semester in semesters]
     earned_credits = [semester.earn_credits or 0 for semester in semesters]
-
+    print("credits",earned_credits)
     # Calculate yearback required credits
     current_semester = int(user.semester.split('_')[-1])
     print("Current semester:", current_semester)  # Log current semester
     yearback_required = 0
 
+
     if current_semester <= 4:
         first_two_semesters_total = sum(total_credits[:2])
+        print(first_two_semesters_total)
         first_two_semesters_earned = sum(earned_credits[:2])
+        print(first_two_semesters_earned)
         difference = first_two_semesters_total - first_two_semesters_earned
-        yearback_required = max(0, 17 - difference)
+        print(difference,'diff')
+        yearback_required = max(0,  difference-17)
     elif current_semester <= 6:
         first_four_semesters_total = sum(total_credits[:4])
         first_four_semesters_earned = sum(earned_credits[:4])
         difference = first_four_semesters_total - first_four_semesters_earned
-        yearback_required = max(0, 41 - difference)
+        yearback_required = max(0, difference-41)
 
     # Calculate SGPA required for upcoming semesters to achieve targeted CGPA
     targeted_cgpa = user.targeted_cgpa or 0.0

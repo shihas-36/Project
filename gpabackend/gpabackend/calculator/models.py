@@ -65,3 +65,4 @@ class GradeDetail(models.Model):
 
     def __str__(self):
         return f"{self.subject.name} - Marks: {self.marks}, Grade: {self.grade}"
+
