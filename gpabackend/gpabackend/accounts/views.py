@@ -13,6 +13,7 @@ from django.db.models import Q
 from django.core.exceptions import ValidationError
 from rest_framework.decorators import api_view, permission_classes
 
+
 class SignUpView(APIView):
     permission_classes = [AllowAny]  # Add this line
 
@@ -169,8 +170,9 @@ def increment_semester(request):
     try:
         # Increment semester for students who are not faculty and have a semester < 8
         updated = CustomUser.objects.filter(
-            is_faculty=False,
-            semester__lt='8'  # Assuming semester is stored as a CharField
+            is_faculty=False, # Re
+            semester__lt='8',
+            has_seen_increment_notification=True  # Assuming semester is stored as a CharField
         ).update(
             semester=models.Case(
                 models.When(semester='1', then=models.Value('2')),
@@ -181,7 +183,8 @@ def increment_semester(request):
                 models.When(semester='6', then=models.Value('7')),
                 models.When(semester='7', then=models.Value('8')),
                 default=models.F('semester')
-            )
+            ),
+            has_seen_increment_notification=False  # Reset notification status
         )
         
         return Response({
@@ -264,3 +267,71 @@ def send_notification(request):
         })
     except Exception as e:
         return Response({'error': str(e)}, status=400)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def check_increment_notification(request):
+    user = request.user
+    if user.is_faculty or user.is_superuser:
+        return Response({'show_notification': False})  # No notification for faculty or superusers
+
+    if not user.has_seen_increment_notification:
+        return Response({
+            'show_notification': True,
+            'message': f"Your semester has been incremented to {user.semester}. Please confirm your readiness."
+        })
+    return Response({'show_notification': False})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def confirm_increment_notification(request):
+    user = request.user
+    user.has_seen_increment_notification = True
+    user.save()
+    return Response({'success': True, 'message': 'Notification confirmed'})
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def deny_increment_notification(request):
+    user = request.user
+    if user.is_faculty or user.is_superuser:
+        return Response({'error': 'Only students can deny the increment'}, status=403)
+
+    try:
+        # Decrement the semester if it's greater than 1
+        if user.semester and int(user.semester) > 1:
+            user.semester = str(int(user.semester) - 1)
+            user.has_seen_increment_notification = True  # Mark notification as seen
+            user.save()
+            return Response({'success': True, 'message': 'Semester increment denied and reverted'})
+        else:
+            return Response({'error': 'Cannot decrement semester below 1'}, status=400)
+    except Exception as e:
+        return Response({'error': str(e)}, status=400)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_minor_status(request):
+    try:
+        user = request.user
+        is_minor = request.data.get('is_minor', False)  # Get the value from the request
+        user.is_minor = is_minor
+        user.save()
+        return Response({'success': True, 'message': 'Minor status updated successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=400)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_honor_status(request):
+    try:
+        user = request.user
+        is_honors = request.data.get('is_honors', False)  # Get the value from the request
+        user.is_honors = is_honors
+        user.save()
+        return Response({'success': True, 'message': 'Honor status updated successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=400)
+

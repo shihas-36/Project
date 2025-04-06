@@ -49,7 +49,7 @@ def get_user_data(request):
             semester_info = {
                 'semester': semester.semester,
                 'gpa': semester.gpa,
-                'minor_gpa': semester.minor_gpa,  # Include minor GPA
+                'minor_gpa': semester.minor_gpa,
                 'subjects': []
             }
 
@@ -62,7 +62,7 @@ def get_user_data(request):
                 semester_info['subjects'].append({
                     'name': subject.name,
                     'credits': subject.credits,
-                    'grade': grade
+                    'grade': subject.grade.grade if subject.grade else 'N/A'
                 })
 
             semester_data.append(semester_info)
@@ -71,6 +71,11 @@ def get_user_data(request):
         cgpa = sum(all_gpas) / len(all_gpas) if len(all_gpas) > 0 else 0.0
 
         response_data = {
+            'user': {
+                'ktuid': user.KTUID,  # Ensure KTUID is included
+                'degree': user.degree,
+                'semester': user.semester,
+            },
             'semesters': semester_data,
             'cgpa': round(cgpa, 2)
         }
@@ -79,9 +84,7 @@ def get_user_data(request):
         return Response(response_data, status=status.HTTP_200_OK)
 
     except Exception as e:
-        error_response = {'error': str(e)}
-        print("Response data:", error_response)  # Log the error response
-        return Response(error_response, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -526,6 +529,8 @@ def summury(request):
         print("Required CGPA sum:", required_cgpa_sum)
         sgpa_required = (required_cgpa_sum - cgpsum) / remaining_semesters
         sgpa_required = round(sgpa_required, 2)
+        if sgpa_required > 10:
+            sgpa_required = "not achievable"
         print("SGPA required:", sgpa_required)  # Log SGPA required
 
     return Response({
@@ -540,13 +545,17 @@ def summury(request):
         'sgpa_required': sgpa_required
     }, status=status.HTTP_200_OK)
 
-@api_view(['GET'])
+@api_view(['POST'])  # Ensure the method matches the frontend request
 @permission_classes([IsAuthenticated])
 def export_gpa_data(request):
-    """API view to export GPA data for PDF generation."""
     try:
+        print("Request Method:", request.method)  # Log the HTTP method
+        print("Request Headers:", request.headers)  # Log the request headers
+        print("Request Body:", request.body.decode('utf-8'))  # Log the raw request body
+
         user = request.user
-        
+        print("User:", user)  # Log the user making the request
+
         # Prepare user data
         user_data = {
             'name': user.get_full_name(),
@@ -554,7 +563,8 @@ def export_gpa_data(request):
             'current_semester': user.semester,
             'cgpa': user.cgpa,
         }
-        
+        print("User Data:", user_data)  # Log user data
+
         # Prepare semester data
         semesters = []
         for semester in Semester.objects.filter(user=user).prefetch_related('subjects__grade'):
@@ -565,18 +575,20 @@ def export_gpa_data(request):
                     'credits': subject.credits,
                     'grade': subject.grade.grade if subject.grade else 'N/A'
                 })
-            
             semesters.append({
                 'semester': semester.semester,
                 'gpa': semester.gpa or 'N/A',
                 'subjects': subjects
             })
-        
-        return Response({
+        response_data = {
             'user': user_data,
             'semesters': semesters
-        })
+        }
+        print("Response Data:", response_data)  # Log the response data
+
+        return Response(response_data, status=status.HTTP_200_OK)
     except Exception as e:
+        print("Error:", str(e))  # Log the error
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
@@ -603,7 +615,8 @@ def fetch_students_by_faculty(request):
             }
             for student in students
         ]
-
+        response_data = {'students': student_data}
+        print("Response data:", response_data)  # Log the response
         return Response({'students': student_data}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

@@ -114,12 +114,17 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF00487F), // Primary Blue
       appBar: AppBar(
-        title: const Text('Admin Dashboard'),
-        backgroundColor: Colors.red, // Different color for admin
+        title: const Text(
+          'Admin Dashboard',
+          style: TextStyle(color: Color(0xFFDABECA)), // Light Pink
+        ),
+        backgroundColor: const Color(0xFF00487F), // Primary Blue
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
+            color: const Color(0xFFDABECA), // Light Pink
             onPressed: () async {
               // Clear stored tokens
               await storage.delete(key: 'auth_token');
@@ -142,36 +147,41 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             // Semester Increment Section
             Card(
               elevation: 4,
+              color: const Color(0xFFF6F5AE), // Light Yellow
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    const Icon(Icons.school, size: 50, color: Colors.blue),
+                    const Icon(Icons.school,
+                        size: 50, color: Color(0xFFDABECA)), // Light Pink
                     const SizedBox(height: 16),
                     const Text(
                       'Semester Management',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blue,
+                        color: Color(0xFFDABECA), // Light Pink
                       ),
                     ),
                     const SizedBox(height: 16),
                     const Text(
                       'Increment all students\' semester by 1 (except those in semester 8)',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 14),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFFDABECA), // Light Pink
+                      ),
                     ),
                     const SizedBox(height: 20),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
+                        backgroundColor: const Color(0xFFDABECA), // Light Pink
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                       onPressed: _isLoading ? null : _incrementSemesters,
                       child: const Text(
                         'Increment Semesters',
-                        style: TextStyle(fontSize: 16),
+                        style: TextStyle(fontSize: 16, color: Colors.white),
                       ),
                     ),
                     if (_updatedStudents > 0) ...[
@@ -193,6 +203,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             // Notification Section
             Card(
               elevation: 4,
+              color: const Color(0xFFF6F5AE), // Light Yellow
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Form(
@@ -200,14 +211,14 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   child: Column(
                     children: [
                       const Icon(Icons.notifications_active,
-                          size: 50, color: Colors.orange),
+                          size: 50, color: Color(0xFFDABECA)), // Light Pink
                       const SizedBox(height: 16),
                       const Text(
                         'Send Notification',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.orange,
+                          color: Color(0xFFDABECA), // Light Pink
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -244,13 +255,14 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                       const SizedBox(height: 20),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orange,
+                          backgroundColor:
+                              const Color(0xFFDABECA), // Light Pink
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         onPressed: _isLoading ? null : _sendNotification,
                         child: const Text(
                           'Send Notification',
-                          style: TextStyle(fontSize: 16),
+                          style: TextStyle(fontSize: 16, color: Colors.white),
                         ),
                       ),
                     ],
@@ -286,7 +298,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               const Padding(
                 padding: EdgeInsets.all(16),
                 child: Center(
-                  child: CircularProgressIndicator(),
+                  child: CircularProgressIndicator(
+                    color: Color(0xFFDABECA), // Light Pink
+                  ),
                 ),
               ),
           ],

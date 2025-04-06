@@ -74,8 +74,10 @@ class _SummaryPageState extends State<SummaryPage> {
                   SummaryBox(
                     title: 'SGPA Required',
                     value: summaryData?['sgpa_required'] != null
-                        ? double.parse(summaryData!['sgpa_required'].toString())
-                            .toStringAsFixed(2)
+                        ? (summaryData!['sgpa_required'] is double
+                            ? summaryData!['sgpa_required'].toStringAsFixed(2)
+                            : summaryData!['sgpa_required']
+                                .toString()) // Handle both float and string
                         : 'N/A', // Ensure SGPA is formatted correctly
                   ),
                 ],

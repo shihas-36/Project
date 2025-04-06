@@ -27,11 +27,13 @@ class _StartPageState extends State<StartPage> {
   bool isLoading = true;
   String errorMessage = '';
   String currentSemester = '';
+  String userKtuid = ''; // Add a variable to store the KTUID
 
   @override
   void initState() {
     super.initState();
     _fetchAcademicData();
+    _checkIncrementNotification(); // Ensure this is called
   }
 
   Future<void> _fetchAcademicData() async {
@@ -49,25 +51,36 @@ class _StartPageState extends State<StartPage> {
         headers: {'Authorization': 'Bearer $token'},
       );
 
+      print('Backend Response: ${response.body}'); // Log the response
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final semesters = data['semesters'] as List;
 
-        final processedData = semesters.map((semester) {
-          return SemesterData(
-            semester['semester'],
-            semester['gpa']?.toDouble() ?? 0.0,
-            semester['minor_gpa']?.toDouble() ?? 0.0,
-          );
-        }).toList();
+        if (data['user'] == null) {
+          throw Exception('User data is missing in the response');
+        }
 
         setState(() {
-          semesterData = processedData;
+          userKtuid = data['user']['ktuid'] ?? 'N/A';
           currentCgpa = data['cgpa']?.toDouble() ?? 0.0;
+
+          final semesters = data['semesters'] as List;
+          semesterData = semesters.map((semester) {
+            return SemesterData(
+              semester['semester'],
+              semester['gpa']?.toDouble() ?? 0.0,
+              semester['minor_gpa']?.toDouble() ?? 0.0,
+            );
+          }).toList();
+
           if (semesters.isNotEmpty) {
-            currentSemester = semesters.last['semester'];
+            currentSemester = semesters.last['semester']
+                .replaceAll('semester_', ''); // Extract numeric value
             currentSgpa = semesters.last['gpa']?.toDouble() ?? 0.0;
             currentMinorGpa = semesters.last['minor_gpa']?.toDouble() ?? 0.0;
+
+            // Debug log for currentSemester
+            print('Fetched Current Semester: $currentSemester');
           }
         });
       } else {
@@ -80,25 +93,294 @@ class _StartPageState extends State<StartPage> {
     }
   }
 
+  Future<void> _exportPDF() async {
+    try {
+      // Log the KTUID being sent
+      print('Exporting PDF for KTUID: $userKtuid');
+
+      // Call the export functionality
+      await ExportPage().fetchAndGeneratePDF(context, userKtuid);
+    } catch (e) {
+      // Log any errors that occur
+      print('Error occurred while exporting PDF: $e');
+
+      // Show an error message to the user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
+
+  Future<void> _checkIncrementNotification() async {
+    print('Checking increment notification...'); // Debug log
+    try {
+      final token = await storage.read(key: 'auth_token');
+      if (token == null) throw Exception('No authentication token found');
+
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:8000/check_increment_notification/'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      print('Notification API Response: ${response.body}'); // Debug log
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['show_notification'] == true) {
+          _showIncrementNotificationDialog(data['message']);
+        }
+      } else {
+        throw Exception('Failed to check notification');
+      }
+    } catch (e) {
+      print('Error in _checkIncrementNotification: $e'); // Debug log
+    }
+  }
+
+  void _showIncrementNotificationDialog(String message) {
+    print('Showing notification dialog with message: $message'); // Debug log
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Semester Increment Notification'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _confirmIncrementNotification();
+              },
+              child: const Text('Confirm'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _denyIncrementNotification();
+              },
+              child: const Text('Deny'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmIncrementNotification() async {
+    try {
+      final token = await storage.read(key: 'auth_token');
+      if (token == null) throw Exception('No authentication token found');
+
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:8000/confirm_increment_notification/'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Notification confirmed!')),
+        );
+
+        // Fetch the updated semester from the backend
+        final updatedResponse = await http.get(
+          Uri.parse('http://10.0.2.2:8000/get_user_data/'),
+          headers: {'Authorization': 'Bearer $token'},
+        );
+
+        if (updatedResponse.statusCode == 200) {
+          final updatedData = json.decode(updatedResponse.body);
+          final updatedSemester = updatedData['user']['semester'];
+
+          setState(() {
+            currentSemester = updatedSemester.replaceAll(
+                'semester_', ''); // Update currentSemester
+          });
+
+          // Debug log for currentSemester
+          print('Updated Current Semester: $currentSemester');
+
+          // Trigger notifications based on the updated semester
+          if (currentSemester == '3') {
+            print('Triggering minor courses notification...');
+            _askMinorCourses(); // Ask about minor courses
+          } else if (currentSemester == '4') {
+            print('Triggering honor courses notification...');
+            _askHonorCourses(); // Ask about honor courses
+          } else {
+            print(
+                'No notifications triggered for currentSemester: $currentSemester');
+          }
+        } else {
+          throw Exception('Failed to fetch updated user data');
+        }
+      } else {
+        throw Exception('Failed to confirm notification');
+      }
+    } catch (e) {
+      print('Error in _confirmIncrementNotification: $e');
+    }
+  }
+
+  Future<void> _denyIncrementNotification() async {
+    try {
+      final token = await storage.read(key: 'auth_token');
+      if (token == null) throw Exception('No authentication token found');
+
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:8000/deny_increment_notification/'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Semester increment denied and reverted!')),
+        );
+      } else {
+        throw Exception('Failed to deny increment');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+  void _askMinorCourses() {
+    print('Displaying minor courses dialog...'); // Debug log
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Minor Courses'),
+          content: const Text(
+              'Are you planning to take minor courses this semester?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _updateMinorStatus(true); // User is taking minor courses
+              },
+              child: const Text('Yes'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _updateMinorStatus(false); // User is not taking minor courses
+              },
+              child: const Text('No'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _updateMinorStatus(bool isMinor) async {
+    try {
+      final token = await storage.read(key: 'auth_token');
+      if (token == null) throw Exception('No authentication token found');
+
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:8000/update_minor_status/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'is_minor': isMinor}),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(isMinor
+                  ? 'Minor courses enabled!'
+                  : 'Minor courses disabled!')),
+        );
+      } else {
+        throw Exception('Failed to update minor status');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+  void _askHonorCourses() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Honor Courses'),
+          content: const Text(
+              'Are you planning to take honor courses this semester?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _updateHonorStatus(true); // User is taking honor courses
+              },
+              child: const Text('Yes'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _updateHonorStatus(false); // User is not taking honor courses
+              },
+              child: const Text('No'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _updateHonorStatus(bool isHonors) async {
+    try {
+      final token = await storage.read(key: 'auth_token');
+      if (token == null) throw Exception('No authentication token found');
+
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:8000/update_honor_status/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'is_honors': isHonors}),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(isHonors
+                  ? 'Honor courses enabled!'
+                  : 'Honor courses disabled!')),
+        );
+      } else {
+        throw Exception('Failed to update honor status');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFF00487F), // Primary Blue
       appBar: AppBar(
         title: const Text(
           'Academic Performance',
           style: TextStyle(
-            color: Colors.white,
+            color: Color(0xFFDABECA), // Light Pink
             fontWeight: FontWeight.bold,
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.blue[800],
+        backgroundColor: const Color(0xFF00487F), // Primary Blue
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: Color(0xFFDABECA)), // Light Pink
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications), // Notification icon
+            icon: const Icon(Icons.notifications),
+            color: const Color(0xFFDABECA), // Light Pink
             onPressed: () {
               Navigator.push(
                 context,
@@ -108,12 +390,10 @@ class _StartPageState extends State<StartPage> {
           ),
           IconButton(
             icon: const Icon(Icons.logout),
+            color: const Color(0xFFDABECA), // Light Pink
             onPressed: () async {
-              // Clear stored tokens
               await storage.delete(key: 'auth_token');
               await storage.delete(key: 'refresh_token');
-
-              // Navigate back to LoginPage
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => LoginPage()),
@@ -123,20 +403,29 @@ class _StartPageState extends State<StartPage> {
         ],
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFFDABECA), // Light Pink
+              ),
+            )
           : errorMessage.isNotEmpty
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(errorMessage,
-                          style: const TextStyle(color: Colors.red)),
+                      Text(
+                        errorMessage,
+                        style: const TextStyle(
+                          color: Color(0xFFDABECA), // Light Pink
+                        ),
+                      ),
                       const SizedBox(height: 20),
                       ElevatedButton(
                         onPressed: _fetchAcademicData,
                         child: const Text('Retry'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue[800],
+                          backgroundColor:
+                              const Color(0xFFDABECA), // Light Pink
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -149,22 +438,12 @@ class _StartPageState extends State<StartPage> {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      // GPA Chart Section
                       _buildGpaChart(),
-
                       const SizedBox(height: 16),
-
-                      // Current Semester Info
                       _buildCurrentSemesterCard(),
-
                       const SizedBox(height: 16),
-
-                      // GPA Summary Cards
                       _buildGpaSummaryCards(),
-
                       const SizedBox(height: 24),
-
-                      // Action Buttons
                       _buildActionButtons(),
                     ],
                   ),
@@ -173,108 +452,101 @@ class _StartPageState extends State<StartPage> {
   }
 
   Widget _buildGpaChart() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('GPA Progress',
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => GpaCalculator(), // Use GpaCalculator()
+          ),
+        );
+      },
+      child: Card(
+        elevation: 2,
+        color: const Color(0xFFF6F5AE), // Light Yellow
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'GPA Progress',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                )),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 240,
-              child: semesterData.isEmpty
-                  ? const Center(child: Text('No data available'))
-                  : SfCartesianChart(
-                      primaryXAxis: CategoryAxis(
-                        title: AxisTitle(text: 'Semester'),
-                        labelRotation: -45,
-                        majorGridLines: const MajorGridLines(width: 0),
-                      ),
-                      primaryYAxis: NumericAxis(
-                        minimum: 0,
-                        maximum: 10,
-                        interval: 1,
-                        title: AxisTitle(text: 'GPA'),
-                        majorGridLines: const MajorGridLines(width: 0),
-                      ),
-                      plotAreaBorderWidth: 0,
-                      tooltipBehavior: TooltipBehavior(enable: true),
-                      series: <ChartSeries>[
-                        LineSeries<SemesterData, String>(
-                          dataSource: semesterData,
-                          xValueMapper: (data, _) => data.semesterName,
-                          yValueMapper: (data, _) => data.gpa,
-                          name: 'GPA',
-                          color: Colors.blue[800],
-                          width: 3,
-                          markerSettings: const MarkerSettings(
-                            isVisible: true,
-                            shape: DataMarkerType.circle,
-                            borderWidth: 2,
-                            borderColor: Colors.blue,
-                            color: Colors.white,
-                          ),
-                          dataLabelSettings: const DataLabelSettings(
-                            isVisible: true,
-                            textStyle: TextStyle(fontSize: 10),
-                          ),
-                        ),
-                        LineSeries<SemesterData, String>(
-                          dataSource: semesterData,
-                          xValueMapper: (data, _) => data.semesterName,
-                          yValueMapper: (data, _) => data.minorGpa,
-                          name: 'Minor GPA',
-                          color: Colors.green[600],
-                          width: 3,
-                          markerSettings: const MarkerSettings(
-                            isVisible: true,
-                            shape: DataMarkerType.diamond,
-                            borderWidth: 2,
-                            borderColor: Colors.green,
-                            color: Colors.white,
-                          ),
-                          dataLabelSettings: const DataLabelSettings(
-                            isVisible: true,
-                            textStyle: TextStyle(fontSize: 10),
-                          ),
-                        ),
-                      ],
-                      legend: Legend(
-                        isVisible: true,
-                        position: LegendPosition.bottom,
-                        textStyle: const TextStyle(fontSize: 12),
-                      ),
-                    ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => GpaCalculator()),
+                  color: Color(0xFF00487F), // Primary Blue
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue[800],
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                child: const Text('View GPA Details',
-                    style: TextStyle(fontSize: 16)),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 240,
+                child: semesterData.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No data available',
+                          style: TextStyle(color: Color(0xFFF6AE2D)), // Orange
+                        ),
+                      )
+                    : SfCartesianChart(
+                        primaryXAxis: CategoryAxis(
+                          title: AxisTitle(
+                            text: 'Semester',
+                            textStyle: const TextStyle(
+                              color: Color(0xFF00487F), // Primary Blue
+                            ),
+                          ),
+                          labelRotation: -45,
+                          majorGridLines: const MajorGridLines(width: 0),
+                        ),
+                        primaryYAxis: NumericAxis(
+                          minimum: 0,
+                          maximum: 10,
+                          interval: 1,
+                          title: AxisTitle(
+                            text: 'GPA',
+                            textStyle: const TextStyle(
+                              color: Color(0xFF00487F), // Primary Blue
+                            ),
+                          ),
+                          majorGridLines: const MajorGridLines(width: 0),
+                        ),
+                        plotAreaBorderWidth: 0,
+                        tooltipBehavior: TooltipBehavior(enable: true),
+                        series: <ChartSeries>[
+                          LineSeries<SemesterData, String>(
+                            dataSource: semesterData,
+                            xValueMapper: (data, _) => data.semesterName,
+                            yValueMapper: (data, _) => data.gpa,
+                            name: 'GPA',
+                            color: const Color(0xFFF6AE2D), // Orange
+                            width: 3,
+                            markerSettings: const MarkerSettings(
+                              isVisible: true,
+                              shape: DataMarkerType.circle,
+                              borderWidth: 2,
+                              borderColor: Color(0xFFF6AE2D), // Orange
+                            ),
+                            dataLabelSettings: const DataLabelSettings(
+                              isVisible: true,
+                              textStyle: TextStyle(fontSize: 10),
+                            ),
+                          ),
+                        ],
+                        legend: Legend(
+                          isVisible: true,
+                          position: LegendPosition.bottom,
+                          textStyle: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF00487F), // Primary Blue
+                          ),
+                        ),
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -380,9 +652,12 @@ class _StartPageState extends State<StartPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _buildActionButton(Icons.calculate, 'Minor', Colors.orange[800]!),
-        _buildActionButton(Icons.summarize, 'Summary', Colors.purple[600]!),
-        _buildActionButton(Icons.download, 'Export', Colors.blue[800]!),
+        _buildActionButton(
+            Icons.calculate, 'Minor', const Color(0xFFDABECA)), // Light Pink
+        _buildActionButton(
+            Icons.summarize, 'Summary', const Color(0xFFDABECA)), // Light Pink
+        _buildActionButton(
+            Icons.download, 'Export', const Color(0xFFDABECA)), // Light Pink
       ],
     );
   }
@@ -409,8 +684,7 @@ class _StartPageState extends State<StartPage> {
                 Navigator.push(context,
                     MaterialPageRoute(builder: (context) => SummaryPage()));
               } else if (label == 'Export') {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => ExportPage()));
+                _exportPDF(); // Call the export PDF function
               }
             },
           ),

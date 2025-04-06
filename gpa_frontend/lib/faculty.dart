@@ -17,6 +17,7 @@ class FacultyService {
     final authToken = await storage.read(key: 'auth_token'); // Retrieve token
     final url = Uri.parse('$baseUrl/fetch_students_by_faculty/');
     try {
+      print('Sending GET request to $url'); // Log the request URL
       final response = await http.get(
         url,
         headers: {
@@ -53,11 +54,14 @@ class FacultyService {
   }
 
   Future<void> fetchAndGeneratePDF(BuildContext context, String ktuid) async {
+    print('fetchAndGeneratePDF method called'); // Add this
     try {
       final authToken = await storage.read(key: 'auth_token');
       if (authToken == null) throw Exception('No authentication token found');
 
       final url = Uri.parse('$baseUrl/export-pdf/');
+      print(
+          'Sending POST request to $url with KTUID: $ktuid'); // Log the request
       final response = await http.post(
         url,
         headers: {

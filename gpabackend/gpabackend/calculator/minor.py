@@ -227,226 +227,218 @@ MINOR = {
 HONOR = {
     "CSE": {
         "Bucket 1": {
-            'semester_3': {
-                "B1": 4,
-                "MOOC":0
-            },
             'semester_4': {
-                "B3": 4,
-                "MOOC":0
+                "NUMBER THEORY": 4,
+                "MOOC": 0
             },
             'semester_5': {
-                "B5": 4,
-                "MOOC":0
+                "CRYPTOGRAPHIC ALGORITHMS": 4,
+                "MOOC": 0
             },
             'semester_6': {
-                "B7": 4,
-                "MOOC":0
+                "NETWORK SECURITY": 4,
+                "MOOC": 0
+            },
+            'semester_7': {
+                "CYBER FORENSICS": 4,
+                "MOOC": 0
+            },
+            'semester_8': {
+                "MINIPROJECT": 4,
+                "MOOC": 0
             },
         },
         "Bucket 2": {
-            'semester_3': {
-                "B1": 4,
-                "MOOC":0
-            },
             'semester_4': {
-                "B3": 4,
-                "MOOC":0
+                "COMPUTATIONAL FUNDAMENTALS FOR MACHINE LEARNING": 4,
+                "MOOC": 0
             },
             'semester_5': {
-                "B5": 4,
-                "MOOC":0
+                "NEURAL NETWORKS AND DEEP LEARNING": 4,
+                "MOOC": 0
             },
             'semester_6': {
-                "B7": 4,
-                "MOOC":0
+                "ADVANCED TOPICS IN MACHINE LEARNING": 4,
+                "MOOC": 0
+            },
+            'semester_7': {
+                "ADVANCED TOPICS IN ARTIFICIAL INTELLIGENCE": 4,
+                "MOOC": 0
+            },
+            'semester_8': {
+                "MINIPROJECT": 4,
+                "MOOC": 0
             },
         },
         "Bucket 3": {
-            'semester_3': {
-                "B1": 4,
-                "MOOC":0
-            },
             'semester_4': {
-                "B3": 4,
-                "MOOC":0
+                "PRINCIPLES OF PROGRAM ANALYSIS AND VERIFICATION": 4,
+                "MOOC": 0
             },
             'semester_5': {
-                "B5": 4,
-                "MOOC":0
+                "PRINCIPLES OF MODEL CHECKING": 4,
+                "MOOC": 0
             },
             'semester_6': {
-                "B7": 4,
-                "MOOC":0
+                "THEORY OF COMPUTABILITY AND COMPLEXITY": 4,
+                "MOOC": 0
             },
-        }
-    },
-    "CE": {
-        "Bucket 1": {
-            'semester_3': {
-                "B1": 4,
-                "MOOC":0
+            'semester_7': {
+                "LOGIC FOR COMPUTER SCIENCE": 4,
+                "MOOC": 0
             },
-            'semester_4': {
-                "B3": 4,
-                "MOOC":0
-            },
-            'semester_5': {
-                "B5": 4,
-                "MOOC":0
-            },
-            'semester_6': {
-                "B7": 4,
-                "MOOC":0
+            'semester_8': {
+                "MINIPROJECT": 4,
+                "MOOC": 0
             },
         },
-        "Bucket 2": {
-            'semester_3': {
-                "B1": 4,
-                "MOOC":0
-            },
-            'semester_4': {
-                "B3": 4,
-                "MOOC":0
-            },
-            'semester_5': {
-                "B5": 4,
-                "MOOC":0
-            },
-            'semester_6': {
-                "B7": 4,
-                "MOOC":0
-            },
-        },
-        "Bucket 3": {
-            'semester_3': {
-                "B1": 4,
-                "MOOC":0
-            },
-            'semester_4': {
-                "B3": 4,
-                "MOOC":0
-            },
-            'semester_5': {
-                "B5": 4,
-                "MOOC":0
-            },
-            'semester_6': {
-                "B7": 4,
-                "MOOC":0
-            },
-        }
     },
     "ME": {
         "Bucket 1": {
             'semester_3': {
-                "B1": 4,
-                "MOOC":0
+                "MECHANICS OF MATERIALS": 4,
+                "MOOC": 0
             },
             'semester_4': {
-                "B3": 4,
-                "MOOC":0
+                "THEORY OF MACHINES": 4,
+                "MOOC": 0
             },
             'semester_5': {
-                "B5": 4,
-                "MOOC":0
+                "DYNAMICS OF MACHINES": 4,
+                "MOOC": 0
             },
             'semester_6': {
-                "B7": 4,
-                "MOOC":0
+                "MACHINE DESIGN": 4,
+                "MOOC": 0
+            },
+            'semester_7': {
+                "MINIPROJECT": 4,
+                "MOOC": 0
+            },
+            'semester_8': {
+                "MINIPROJECT": 4,
+                "MOOC": 0
             },
         },
         "Bucket 2": {
             'semester_3': {
-                "B1": 4,
-                "MOOC":0
+                "FLUID MECHANICS & MACHINERY": 4,
+                "MOOC": 0
             },
             'semester_4': {
-                "B3": 4,
-                "MOOC":0
+                "THERMODYNAMICS": 4,
+                "MOOC": 0
             },
             'semester_5': {
-                "B5": 4,
-                "MOOC":0
+                "THERMAL ENGINEERING": 4,
+                "MOOC": 0
             },
             'semester_6': {
-                "B7": 4,
-                "MOOC":0
+                "HEAT TRANSFER": 4,
+                "MOOC": 0
+            },
+            'semester_7': {
+                "MINIPROJECT": 4,
+                "MOOC": 0
+            },
+            'semester_8': {
+                "MINIPROJECT": 4,
+                "MOOC": 0
             },
         },
         "Bucket 3": {
             'semester_3': {
-                "B1": 4,
-                "MOOC":0
+                "MATERIAL SCIENCE & TECHNOLOGY": 4,
+                "MOOC": 0
             },
             'semester_4': {
-                "B3": 4,
-                "MOOC":0
+                "MANUFACTURING TECHNOLOGY": 4,
+                "MOOC": 0
             },
             'semester_5': {
-                "B5": 4,
-                "MOOC":0
+                "MACHINE TOOLS ENGINEERING": 4,
+                "MOOC": 0
             },
             'semester_6': {
-                "B7": 4,
-                "MOOC":0
+                "INDUSTRIAL ENGINEERING": 4,
+                "MOOC": 0
             },
-        }
+            'semester_7': {
+                "MINIPROJECT": 4,
+                "MOOC": 0
+            },
+            'semester_8': {
+                "MINIPROJECT": 4,
+                "MOOC": 0
+            },
+        },
     },
-    "EEE": {
+    "CE": {
         "Bucket 1": {
-            'semester_3': {
-                "B1": 4,
-                "MOOC":0
-            },
             'semester_4': {
-                "B3": 4,
-                "MOOC":0
+                "ADVANCED MECHANICS OF SOLIDS": 4,
+                "MOOC": 0
             },
             'semester_5': {
-                "B5": 4,
-                "MOOC":0
+                "STRUCTURAL DYNAMICS": 4,
+                "MOOC": 0
             },
             'semester_6': {
-                "B7": 4,
-                "MOOC":0
+                "FINITE ELEMENT METHODS": 4,
+                "MOOC": 0
+            },
+            'semester_7': {
+                "MODERN CONSTRUCTION MATERIALS": 4,
+                "MOOC": 0
+            },
+            'semester_8': {
+                "MINIPROJECT": 4,
+                "MOOC": 0
             },
         },
         "Bucket 2": {
-            'semester_3': {
-                "B1": 4,
-                "MOOC":0
-            },
             'semester_4': {
-                "B3": 4,
-                "MOOC":0
+                "PAVEMENT CONSTRUCTION AND MANAGEMENT": 4,
+                "MOOC": 0
             },
             'semester_5': {
-                "B5": 4,
-                "MOOC":0
+                "TRANSPORTATION SYSTEMS MANAGEMENT": 4,
+                "MOOC": 0
             },
             'semester_6': {
-                "B7": 4,
-                "MOOC":0
+                "EARTH DAMS AND EARTH RETAINING STRUCTURES": 4,
+                "MOOC": 0
+            },
+            'semester_7': {
+                "SOIL DYNAMICS AND MACHINE FOUNDATIONS": 4,
+                "MOOC": 0
+            },
+            'semester_8': {
+                "MINIPROJECT": 4,
+                "MOOC": 0
             },
         },
         "Bucket 3": {
-            'semester_3': {
-                "B1": 4,
-                "MOOC":0
-            },
             'semester_4': {
-                "B3": 4,
-                "MOOC":0
+                "GEOGRAPHICAL INFORMATION SYSTEMS": 4,
+                "MOOC": 0
             },
             'semester_5': {
-                "B5": 4,
-                "MOOC":0
+                "GROUND WATER HYDROLOGY": 4,
+                "MOOC": 0
             },
             'semester_6': {
-                "B7": 4,
-                "MOOC":0
+                "ENVIRONMENTAL POLLUTION MODELLING": 4,
+                "MOOC": 0
             },
-        }
-    },
+            'semester_7': {
+                "ENVIRONMENTAL POLLUTION CONTROL TECHNIQUES": 4,
+                "MOOC": 0
+            },
+            'semester_8': {
+                "MINIPROJECT": 4,
+                "MOOC": 0
+            },
+        },
+    }
 }

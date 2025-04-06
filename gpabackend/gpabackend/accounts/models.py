@@ -1,5 +1,6 @@
-from django.contrib.auth.models import AbstractUser,BaseUserManager
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
+from rest_framework.response import Response
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -45,6 +46,8 @@ class CustomUser(AbstractUser):
     REQUIRED_FIELDS = ['username', 'KTUID', 'semester']
     objects = CustomUserManager()  # Add this line
     cgpa = models.FloatField(null=True, blank=True)  # Cumulative GPA up to this semester
+    has_seen_increment_notification = models.BooleanField(default=False)  # Track notification status
+    is_ready_for_next_semester = models.BooleanField(default=False)  # Field to track readiness
     
     groups = models.ManyToManyField(
         'auth.Group',
@@ -60,9 +63,18 @@ class CustomUser(AbstractUser):
         help_text='Specific permissions for this user.',
         verbose_name='user permissions',
     )
+
     def __str__(self):
         return self.email
-    
+
+    def check_increment_notification(self):
+        if not self.has_seen_increment_notification:
+            return Response({
+                'show_notification': True,
+                'message': f"Your semester has been incremented to {self.semester}. Please confirm your readiness."
+            })
+
+
 class Notification(models.Model):
     """
     Model to store notifications for users.

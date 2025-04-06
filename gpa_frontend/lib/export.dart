@@ -22,14 +22,29 @@ class ExportPage extends StatelessWidget {
       // Fetch GPA data for the specific student from the Django API
       final token = await storage.read(key: 'auth_token');
       if (token == null) throw Exception('No authentication token found');
+
+      final url = Uri.parse('$baseUrl/export-pdf/');
+      final headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+      final body =
+          json.encode({'ktuid': ktuid}); // Pass the KTUID to the backend
+
+      // Log the request details
+      print('Sending POST request to $url');
+      print('Request Headers: $headers');
+      print('Request Body: $body');
+
       final response = await http.post(
-        Uri.parse('$baseUrl/export-pdf/'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({'ktuid': ktuid}), // Pass the KTUID to the backend
+        url,
+        headers: headers,
+        body: body,
       );
+
+      // Log the response
+      print('Export PDF Response: ${response.statusCode}');
+      print('Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -48,6 +63,7 @@ class ExportPage extends StatelessWidget {
         throw Exception('Failed to fetch data from API: ${response.body}');
       }
     } catch (e) {
+      print('Error occurred while exporting PDF: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${e.toString()}')),
       );

@@ -45,13 +45,19 @@ class _LoginPageState extends State<LoginPage> {
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         final accessToken = responseData['access'];
+        final refreshToken = responseData['refresh'];
+        final KTUID =
+            responseData['KTUID'] ?? 'N/A'; // Get KTUID from response,
+        // Log the tokens
+        print('Access Token: $accessToken');
+        print('Refresh Token: $refreshToken');
 
         // Store tokens
         await storage.write(key: 'auth_token', value: accessToken);
-        await storage.write(
-            key: 'refresh_token', value: responseData['refresh']);
+        await storage.write(key: 'refresh_token', value: refreshToken);
+        await storage.write(key: 'ktuid', value: KTUID);
 
-        // First check superuser status via API
+        // Check superuser status
         final isSuperuserResponse = await http.get(
           Uri.parse('http://10.0.2.2:8000/api/is_admin/'),
           headers: {
@@ -64,6 +70,9 @@ class _LoginPageState extends State<LoginPage> {
           final superuserData = json.decode(isSuperuserResponse.body);
           final isSuperuser = superuserData['is_superuser'] ?? false;
 
+          // Log superuser status
+          print('Is Superuser: $isSuperuser');
+
           if (isSuperuser) {
             Navigator.pushReplacement(
               context,
@@ -72,7 +81,7 @@ class _LoginPageState extends State<LoginPage> {
             return;
           }
 
-          // If not superuser, check faculty status
+          // Check faculty status
           final isFacultyResponse = await http.get(
             Uri.parse('http://10.0.2.2:8000/api/is_faculty/'),
             headers: {
@@ -84,6 +93,9 @@ class _LoginPageState extends State<LoginPage> {
           if (isFacultyResponse.statusCode == 200) {
             final isFacultyData = json.decode(isFacultyResponse.body);
             final isFaculty = isFacultyData['is_faculty'] ?? false;
+
+            // Log faculty status
+            print('Is Faculty: $isFaculty');
 
             Navigator.pushReplacement(
               context,
