@@ -99,7 +99,8 @@ class SummaryBox extends StatelessWidget {
       margin: EdgeInsets.symmetric(vertical: 8.0),
       padding: EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.blueAccent),
+        color: Color(0xFFFCE19C), // Light Yellow
+        border: Border.all(color: Color(0xFFFFCE0A)), // Yellow
         borderRadius: BorderRadius.circular(8.0),
       ),
       child: Row(
@@ -107,11 +108,20 @@ class SummaryBox extends StatelessWidget {
         children: [
           Text(
             title,
-            style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 18.0,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF476C9B), // Blue
+              fontFamily: 'Vanilla',
+            ),
           ),
           Text(
             value,
-            style: TextStyle(fontSize: 18.0),
+            style: TextStyle(
+              fontSize: 18.0,
+              color: Color(0xFF476C9B), // Blue
+              fontFamily: 'Vanilla',
+            ),
           ),
         ],
       ),

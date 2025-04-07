@@ -12,34 +12,56 @@ from django.db import models
 from django.db.models import Q
 from django.core.exceptions import ValidationError
 from rest_framework.decorators import api_view, permission_classes
+from django.core.mail import send_mail
+from django.conf import settings
+import random
+import logging
+from django.contrib.auth import get_user_model
+from .authentication import InactiveUserJWTAuthentication
+
+logger = logging.getLogger(__name__)
+
+User = get_user_model()
 
 
 class SignUpView(APIView):
-    permission_classes = [AllowAny]  # Add this line
+    permission_classes = [AllowAny]
 
     def post(self, request):
         required_fields = ['username', 'email', 'password', 'KTUID', 'semester', 'degree', 'targeted_cgpa']
         if not all(field in request.data for field in required_fields):
-            response_data = {'error': 'Missing required fields'}
-            print("Response data:", response_data)  # Log the response
-            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Missing required fields'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()  # Save user once
-            refresh = RefreshToken.for_user(user)
+            user = serializer.save()
+            user.is_active = False
+            user.has_seen_increment_notification=True  # Deactivate user until OTP is verified
+            user.save()
 
-            response_data = {  # Return tokens in response
-                'user': serializer.data,
-                'access': str(refresh.access_token),
-                'refresh': str(refresh)
-            }
-            print("Response data:", response_data)  # Log the response
-            return Response(response_data, status=status.HTTP_201_CREATED)
+            # Generate OTP
+            otp = random.randint(100000, 999999)
+            user.otp = otp  # Assuming `otp` is a field in the `CustomUser` model
+            user.save()
 
-        response_data = serializer.errors
-        print("Response errors:", response_data)  # Log the errors
-        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+            # Generate a temporary token
+            token = RefreshToken.for_user(user).access_token
+
+            # Send OTP via email
+            send_mail(
+                subject="Your OTP for Email Verification",
+                message=f"Your OTP is {otp}. Please use this to verify your email.",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+            )
+
+            return Response({
+                'message': 'User created. OTP sent to email.',
+                'token': str(token)  # Send the token to the frontend
+            }, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class LoginView(APIView):
     def post(self, request):
@@ -334,4 +356,64 @@ def update_honor_status(request):
         return Response({'success': True, 'message': 'Honor status updated successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=400)
+
+
+
+
+class VerifyOTPView(APIView):
+    permission_classes = [AllowAny]  # Allow access without authentication
+
+    def post(self, request):
+        email = request.data.get('email')
+        otp = request.data.get('otp')
+
+        # Validate input
+        if not email or not otp:
+            return Response({'error': 'Email and OTP are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Find the user by email
+        user = User.objects.filter(email=email).first()
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check if the OTP matches
+        try:
+            if user.otp == int(otp):
+                user.is_active = True  # Activate the user
+                user.otp = None  # Clear the OTP after successful verification
+                user.save()
+                return Response({'message': 'Email verified successfully!'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+        except ValueError:
+            return Response({'error': 'Invalid OTP format'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ResendOTPView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        user = CustomUser.objects.filter(email=email).first()
+
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if user.is_active:
+            return Response({'error': 'User is already verified'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Generate a new OTP
+        otp = random.randint(100000, 999999)
+        user.otp = otp
+        user.save()
+
+        # Send the new OTP via email
+        send_mail(
+            subject="Your OTP for Email Verification",
+            message=f"Your new OTP is {otp}. Please use this to verify your email.",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+        )
+
+        return Response({'message': 'A new OTP has been sent to your email.'}, status=status.HTTP_200_OK)
 

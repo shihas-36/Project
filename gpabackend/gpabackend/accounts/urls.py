@@ -1,7 +1,9 @@
 from django.urls import path
 
 from .views import * 
-from .views import update_minor_status, update_honor_status
+
+
+
 urlpatterns = [
     path('api/signup/', SignUpView.as_view(), name='signup'),
     path('api/login/', LoginView.as_view(), name='login'),
@@ -17,5 +19,7 @@ urlpatterns = [
     path('deny_increment_notification/', deny_increment_notification, name='deny_increment_notification'),  # Add the new endpoint
     path('update_minor_status/', update_minor_status, name='update_minor_status'),
     path('update_honor_status/', update_honor_status, name='update_honor_status'),
-
+   
+    path('api/verify-otp/', VerifyOTPView.as_view(), name='verify_otp'),
+    path('api/resend-otp/', ResendOTPView.as_view(), name='resend_otp'),
 ]

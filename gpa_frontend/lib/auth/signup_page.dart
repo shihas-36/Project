@@ -5,6 +5,8 @@ import '../services/api_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import '../gpa.dart';
+import 'verification_screen.dart';
+import '../theme/colors.dart'; // Import AppColors
 
 class SignUpPage extends StatefulWidget {
   @override
@@ -48,9 +50,9 @@ class _SignUpPageState extends State<SignUpPage> {
           icon: Icon(Icons.arrow_back),
           onPressed: () => Navigator.pushReplacementNamed(context, '/'),
         ),
-        backgroundColor: const Color.fromARGB(255, 20, 53, 89),
+        backgroundColor: AppColors.blue, // Use AppColors for AppBar
       ),
-      backgroundColor: const Color.fromARGB(255, 20, 53, 89),
+      backgroundColor: AppColors.lightBlue, // Use AppColors for background
       body: SafeArea(
         child: SingleChildScrollView(
           child: Form(
@@ -122,7 +124,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             keyboardType: TextInputType.number,
                             decoration: InputDecoration(
                               filled: true,
-                              fillColor: const Color(0xFFF8F0E3),
+                              fillColor: AppColors.lightYellow, // Use AppColors
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
@@ -153,13 +155,14 @@ class _SignUpPageState extends State<SignUpPage> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 15),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF8F0E3),
+                            color: AppColors.lightYellow, // Use AppColors
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: DropdownButton<String>(
                             value: _selectedSemester,
                             underline: Container(),
-                            dropdownColor: const Color(0xFFF8F0E3),
+                            dropdownColor:
+                                AppColors.lightYellow, // Use AppColors
                             items: List.generate(
                                     8, (index) => (index + 1).toString())
                                 .map((value) => DropdownMenuItem(
@@ -179,13 +182,14 @@ class _SignUpPageState extends State<SignUpPage> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 15),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF8F0E3),
+                            color: AppColors.lightYellow, // Use AppColors
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: DropdownButton<String>(
                             value: _selectedDegree,
                             underline: Container(),
-                            dropdownColor: const Color(0xFFF8F0E3),
+                            dropdownColor:
+                                AppColors.lightYellow, // Use AppColors
                             items: ['CSE', 'CE', 'ME', 'EEE']
                                 .map((value) => DropdownMenuItem(
                                     value: value, child: Text(value)))
@@ -232,7 +236,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _submitForm,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF8F0E3),
+                          backgroundColor: AppColors.yellow, // Use AppColors
                           padding: const EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30)),
@@ -245,18 +249,22 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                     ),
                   ),
-                  // Bottom Image
-                  Container(
-                    height: 150,
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          child: Image.asset('assets/hand_with_phone.png',
-                              width: 150),
+                  // Navigation to Login
+                  Center(
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => LoginPage()),
+                        );
+                      },
+                      child: const Text(
+                        'Already having an account? Login',
+                        style: TextStyle(
+                          color: AppColors.yellow, // Use AppColors
+                          fontWeight: FontWeight.bold,
                         ),
-                      ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -278,7 +286,7 @@ class _SignUpPageState extends State<SignUpPage> {
         obscureText: isPassword,
         decoration: InputDecoration(
           filled: true,
-          fillColor: const Color(0xFFF8F0E3),
+          fillColor: AppColors.lightYellow, // Use AppColors
           hintText: label,
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
@@ -340,30 +348,20 @@ class _SignUpPageState extends State<SignUpPage> {
         throw jsonDecode(signUpResponse.body)['error'] ?? 'Signup failed';
       }
 
-      final loginResponse = await http.post(
-        Uri.parse('http://10.0.2.2:8000/token/'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'email': _emailController.text,
-          'password': _passwordController.text,
-        }),
+      // Extract the token from the response
+      final responseData = jsonDecode(signUpResponse.body);
+      final token = responseData['token']; // Ensure the backend sends the token
+
+      // Navigate to the VerificationScreen and pass the token
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => VerificationScreen(
+            email: _emailController.text,
+            token: token, // Pass the token to the VerificationScreen
+          ),
+        ),
       );
-
-      if (loginResponse.statusCode != 200) {
-        throw jsonDecode(loginResponse.body)['error'] ?? 'Login failed';
-      }
-
-      final loginData = json.decode(loginResponse.body);
-      await storage.write(key: 'auth_token', value: loginData['access']);
-      await storage.write(key: 'refresh_token', value: loginData['refresh']);
-      await storage.write(
-        key: 'current_semester',
-        value: _isLetSelected ? 'semester_3' : 'semester_1',
-      );
-
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account created successfully!')));
-      Navigator.pushNamed(context, '/gpa');
     } catch (e) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));

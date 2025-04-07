@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:gpa_frontend/gpa.dart';
-import 'signup_page.dart'; // Import your GPA calculator page
+import 'package:gpa_frontend/theme/colors.dart'; // Import AppColors
 import 'package:gpa_frontend/start.dart';
-import 'package:gpa_frontend/admin.dart'; // Import your ChooseSignupPage
 import 'choose_signup_page.dart';
-import 'package:gpa_frontend/faculty.dart'; // Import your Faculty page
+import 'package:gpa_frontend/faculty.dart';
+import 'package:gpa_frontend/admin.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -151,11 +150,9 @@ class _LoginPageState extends State<LoginPage> {
             Navigator.pushReplacementNamed(context, '/');
           },
         ),
-        backgroundColor: const Color.fromARGB(
-            255, 20, 53, 89), // Set AppBar background color
+        backgroundColor: AppColors.blue, // Use AppColors for AppBar
       ),
-      backgroundColor:
-          const Color.fromARGB(255, 20, 53, 89), // Set background color
+      backgroundColor: AppColors.lightBlue, // Use AppColors for background
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -167,8 +164,8 @@ class _LoginPageState extends State<LoginPage> {
                 Center(
                   child: Image.asset(
                     'assets/Edula.png', // Path to your logo
-                    width: 150, // Adjust the width as needed
-                    height: 150, // Adjust the height as needed
+                    width: 150,
+                    height: 150,
                   ),
                 ),
                 const SizedBox(height: 40),
@@ -199,7 +196,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF8F0E3),
+                      backgroundColor: AppColors.yellow, // Use AppColors
                       padding: const EdgeInsets.symmetric(
                           horizontal: 50, vertical: 15),
                       shape: RoundedRectangleBorder(
@@ -211,8 +208,7 @@ class _LoginPageState extends State<LoginPage> {
                         : const Text(
                             'Login',
                             style: TextStyle(
-                              color: Color(
-                                  0xFF6750A4), // Purple color for the login text
+                              color: AppColors.blue, // Use AppColors
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -243,8 +239,7 @@ class _LoginPageState extends State<LoginPage> {
                           TextSpan(
                             text: 'Sign Up',
                             style: TextStyle(
-                              color: Color(
-                                  0xFF6750A4), // Purple color for Sign Up text
+                              color: AppColors.yellow, // Use AppColors
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -288,7 +283,7 @@ class _LoginPageState extends State<LoginPage> {
             style: const TextStyle(color: Colors.black),
             decoration: InputDecoration(
               filled: true,
-              fillColor: Color(0xFFF8F0E3),
+              fillColor: AppColors.lightYellow, // Use AppColors
               enabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: Colors.transparent, width: 1.0),
                 borderRadius: BorderRadius.circular(30.0),

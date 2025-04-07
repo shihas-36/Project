@@ -380,8 +380,16 @@ class _MinorCalculatorPageState extends State<MinorCalculatorPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Minor Calculator'),
+        title: const Text(
+          'Minor Calculator',
+          style: TextStyle(
+            color: Color(0xFFFFCE0A), // Yellow
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: const Color(0xFF476C9B), // Blue
       ),
+      backgroundColor: const Color(0xFFADD9F4), // Light Blue
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),

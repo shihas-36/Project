@@ -135,21 +135,50 @@ class _NotificationsPageState extends State<NotificationsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
-        backgroundColor: const Color.fromARGB(255, 20, 53, 89),
+        title: const Text(
+          'Notifications',
+          style: TextStyle(
+            color: Color(0xFFFFCE0A), // Yellow
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: const Color(0xFF476C9B), // Blue
+        iconTheme: const IconThemeData(color: Color(0xFFFFCE0A)), // Yellow
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
+            color: const Color(0xFFFFCE0A), // Yellow
             onPressed: _isLoading ? null : _fetchNotifications,
           ),
         ],
       ),
+      backgroundColor: const Color(0xFFADD9F4), // Light Blue
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFFFFCE0A), // Yellow
+              ),
+            )
           : _error.isNotEmpty
-              ? Center(child: Text(_error))
+              ? Center(
+                  child: Text(
+                    _error,
+                    style: const TextStyle(
+                      color: Color(0xFF476C9B), // Blue
+                      fontSize: 16,
+                    ),
+                  ),
+                )
               : _notifications.isEmpty
-                  ? const Center(child: Text('No notifications available'))
+                  ? const Center(
+                      child: Text(
+                        'No notifications available',
+                        style: TextStyle(
+                          color: Color(0xFF476C9B), // Blue
+                          fontSize: 16,
+                        ),
+                      ),
+                    )
                   : ListView.builder(
                       itemCount: _notifications.length,
                       itemBuilder: (context, index) {
@@ -164,8 +193,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             margin: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 4),
                             color: notification.isRead
-                                ? Colors.white
-                                : Colors.blue[50],
+                                ? const Color(0xFFFCE19C) // Light Yellow
+                                : const Color(0xFFFFCE0A)
+                                    .withOpacity(0.2), // Yellow
                             child: Padding(
                               padding: const EdgeInsets.all(12),
                               child: Column(
@@ -181,8 +211,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                           fontWeight: FontWeight.bold,
                                           fontSize: 16,
                                           color: notification.isRead
-                                              ? Colors.grey[600]
-                                              : Colors.blue[900],
+                                              ? const Color(0xFF476C9B) // Blue
+                                              : const Color(0xFF476C9B), // Blue
                                         ),
                                       ),
                                       if (!notification.isRead)
@@ -190,7 +220,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 6, vertical: 2),
                                           decoration: BoxDecoration(
-                                            color: Colors.blue,
+                                            color: const Color(
+                                                0xFFFFCE0A), // Yellow
                                             borderRadius:
                                                 BorderRadius.circular(10),
                                           ),
@@ -207,7 +238,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                   const SizedBox(height: 8),
                                   Text(
                                     notification.content,
-                                    style: const TextStyle(fontSize: 14),
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Color(0xFF476C9B), // Blue
+                                    ),
                                   ),
                                   const SizedBox(height: 8),
                                   Text(

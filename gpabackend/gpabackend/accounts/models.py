@@ -48,6 +48,7 @@ class CustomUser(AbstractUser):
     cgpa = models.FloatField(null=True, blank=True)  # Cumulative GPA up to this semester
     has_seen_increment_notification = models.BooleanField(default=False)  # Track notification status
     is_ready_for_next_semester = models.BooleanField(default=False)  # Field to track readiness
+    otp = models.IntegerField(null=True, blank=True)  # Field to store OTP
     
     groups = models.ManyToManyField(
         'auth.Group',

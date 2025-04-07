@@ -189,7 +189,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                       Text(
                         'Updated $_updatedStudents students',
                         style: const TextStyle(
-                          color: Colors.green,
+                          color: Colors.yellow,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
