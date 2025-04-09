@@ -107,7 +107,7 @@ class FacultySignUpView(APIView):
     def post(self, request):
         print("Faculty signup request received:", request.data)  # Log request data
 
-        required_fields = ['username', 'email', 'password', 'college_code']
+        required_fields = ['username', 'email', 'password','KTUID', 'college_code']
         missing_fields = [field for field in required_fields if field not in request.data]
         if missing_fields:
             response_data = {'error': f'Missing required fields: {", ".join(missing_fields)}'}

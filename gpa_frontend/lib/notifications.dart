@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
+import 'theme/colors.dart';
 
 class UserNotification {
   final int id;
@@ -138,25 +139,25 @@ class _NotificationsPageState extends State<NotificationsPage> {
         title: const Text(
           'Notifications',
           style: TextStyle(
-            color: Color(0xFFFFCE0A), // Yellow
+            color: AppColors.lightYellow, // Yellow
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: const Color(0xFF476C9B), // Blue
-        iconTheme: const IconThemeData(color: Color(0xFFFFCE0A)), // Yellow
+        backgroundColor: AppColors.blue, // Blue
+        iconTheme: const IconThemeData(color: AppColors.lightYellow), // Yellow
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            color: const Color(0xFFFFCE0A), // Yellow
+            color: AppColors.lightYellow, // Yellow
             onPressed: _isLoading ? null : _fetchNotifications,
           ),
         ],
       ),
-      backgroundColor: const Color(0xFFADD9F4), // Light Blue
+      backgroundColor: AppColors.blue, // Light Blue
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                color: Color(0xFFFFCE0A), // Yellow
+                color: AppColors.lightYellow, // Yellow
               ),
             )
           : _error.isNotEmpty
@@ -164,7 +165,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   child: Text(
                     _error,
                     style: const TextStyle(
-                      color: Color(0xFF476C9B), // Blue
+                      color: AppColors.lightYellow, // Blue
                       fontSize: 16,
                     ),
                   ),
@@ -174,7 +175,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       child: Text(
                         'No notifications available',
                         style: TextStyle(
-                          color: Color(0xFF476C9B), // Blue
+                          color: AppColors.blue, // Blue
                           fontSize: 16,
                         ),
                       ),
@@ -192,10 +193,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
                           child: Card(
                             margin: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 4),
-                            color: notification.isRead
-                                ? const Color(0xFFFCE19C) // Light Yellow
-                                : const Color(0xFFFFCE0A)
-                                    .withOpacity(0.2), // Yellow
+                            color: AppColors
+                                .lightBlue, // Change the box color to light blue
                             child: Padding(
                               padding: const EdgeInsets.all(12),
                               child: Column(
@@ -211,8 +210,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                           fontWeight: FontWeight.bold,
                                           fontSize: 16,
                                           color: notification.isRead
-                                              ? const Color(0xFF476C9B) // Blue
-                                              : const Color(0xFF476C9B), // Blue
+                                              ? AppColors.blue // Yellow
+                                              : AppColors.blue, // Yellow
                                         ),
                                       ),
                                       if (!notification.isRead)
@@ -220,15 +219,15 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 6, vertical: 2),
                                           decoration: BoxDecoration(
-                                            color: const Color(
-                                                0xFFFFCE0A), // Yellow
+                                            color:
+                                                AppColors.lightYellow, // Yellow
                                             borderRadius:
                                                 BorderRadius.circular(10),
                                           ),
                                           child: const Text(
                                             'New',
                                             style: TextStyle(
-                                              color: Colors.white,
+                                              color: AppColors.black,
                                               fontSize: 12,
                                             ),
                                           ),
@@ -240,7 +239,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                     notification.content,
                                     style: const TextStyle(
                                       fontSize: 14,
-                                      color: Color(0xFF476C9B), // Blue
+                                      color: AppColors.lightYellow, // Yellow
                                     ),
                                   ),
                                   const SizedBox(height: 8),
@@ -249,7 +248,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                         .format(notification.createdAt),
                                     style: const TextStyle(
                                       fontSize: 12,
-                                      color: Colors.grey,
+                                      color: AppColors.primaryBlue,
                                     ),
                                   ),
                                 ],

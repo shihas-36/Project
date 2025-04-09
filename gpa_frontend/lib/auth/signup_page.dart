@@ -45,14 +45,14 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Sign Up'),
+        title: const Text('Sign Up'),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pushReplacementNamed(context, '/'),
         ),
-        backgroundColor: AppColors.blue, // Use AppColors for AppBar
+        backgroundColor: AppColors.blue, // Updated AppBar background color
       ),
-      backgroundColor: AppColors.lightBlue, // Use AppColors for background
+      backgroundColor: AppColors.blue, // Updated Scaffold background color
       body: SafeArea(
         child: SingleChildScrollView(
           child: Form(
@@ -71,14 +71,15 @@ class _SignUpPageState extends State<SignUpPage> {
                         const Text(
                           'Thqdu',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.lightYellow, // Updated text color
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         IconButton(
                           icon: const Icon(Icons.menu,
-                              color: Colors.white, size: 32),
+                              color: AppColors.lightYellow,
+                              size: 32), // Updated icon color
                           onPressed: () {},
                         ),
                       ],
@@ -90,7 +91,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     child: Text(
                       'Create Account Now!',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.lightYellow, // Updated text color
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
                       ),
@@ -113,7 +114,10 @@ class _SignUpPageState extends State<SignUpPage> {
                       children: [
                         const Text(
                           'Targeted CGPA:',
-                          style: TextStyle(color: Colors.white, fontSize: 16),
+                          style: TextStyle(
+                            color: AppColors.lightYellow, // Updated text color
+                            fontSize: 16,
+                          ),
                         ),
                         const SizedBox(width: 10),
                         Container(
@@ -124,18 +128,21 @@ class _SignUpPageState extends State<SignUpPage> {
                             keyboardType: TextInputType.number,
                             decoration: InputDecoration(
                               filled: true,
-                              fillColor: AppColors.lightYellow, // Use AppColors
+                              fillColor: AppColors
+                                  .lightYellow, // Updated field background color
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
                               ),
                             ),
                             validator: (value) {
-                              if (value == null || value.isEmpty)
+                              if (value == null || value.isEmpty) {
                                 return 'Required';
+                              }
                               final cgpa = double.tryParse(value);
-                              if (cgpa == null || cgpa < 0 || cgpa > 10)
+                              if (cgpa == null || cgpa < 0 || cgpa > 10) {
                                 return 'Invalid';
+                              }
                               return null;
                             },
                           ),
@@ -148,21 +155,26 @@ class _SignUpPageState extends State<SignUpPage> {
                     padding: const EdgeInsets.only(top: 20.0),
                     child: Row(
                       children: [
-                        const Text('Semester : ',
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 16)),
+                        const Text(
+                          'Semester:',
+                          style: TextStyle(
+                            color: AppColors.lightYellow, // Updated text color
+                            fontSize: 16,
+                          ),
+                        ),
                         const SizedBox(width: 10),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 15),
                           decoration: BoxDecoration(
-                            color: AppColors.lightYellow, // Use AppColors
+                            color: AppColors
+                                .lightYellow, // Updated dropdown background color
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: DropdownButton<String>(
                             value: _selectedSemester,
                             underline: Container(),
                             dropdownColor:
-                                AppColors.lightYellow, // Use AppColors
+                                AppColors.lightYellow, // Updated dropdown color
                             items: List.generate(
                                     8, (index) => (index + 1).toString())
                                 .map((value) => DropdownMenuItem(
@@ -175,21 +187,26 @@ class _SignUpPageState extends State<SignUpPage> {
                           ),
                         ),
                         const SizedBox(width: 20),
-                        const Text('Degree : ',
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 16)),
+                        const Text(
+                          'Degree:',
+                          style: TextStyle(
+                            color: AppColors.lightYellow, // Updated text color
+                            fontSize: 16,
+                          ),
+                        ),
                         const SizedBox(width: 10),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 15),
                           decoration: BoxDecoration(
-                            color: AppColors.lightYellow, // Use AppColors
+                            color: AppColors
+                                .lightYellow, // Updated dropdown background color
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: DropdownButton<String>(
                             value: _selectedDegree,
                             underline: Container(),
                             dropdownColor:
-                                AppColors.lightYellow, // Use AppColors
+                                AppColors.lightYellow, // Updated dropdown color
                             items: ['CSE', 'CE', 'ME', 'EEE']
                                 .map((value) => DropdownMenuItem(
                                     value: value, child: Text(value)))
@@ -236,16 +253,23 @@ class _SignUpPageState extends State<SignUpPage> {
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _submitForm,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.yellow, // Use AppColors
+                          backgroundColor: AppColors
+                              .yellow, // Updated button background color
                           padding: const EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30)),
                         ),
                         child: _isLoading
-                            ? CircularProgressIndicator(color: Colors.black)
-                            : const Text('Sign Up',
+                            ? const CircularProgressIndicator(
+                                color: Colors.black)
+                            : const Text(
+                                'Sign Up',
                                 style: TextStyle(
-                                    color: Colors.black, fontSize: 18)),
+                                  color:
+                                      Colors.black, // Updated button text color
+                                  fontSize: 18,
+                                ),
+                              ),
                       ),
                     ),
                   ),
@@ -261,7 +285,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       child: const Text(
                         'Already having an account? Login',
                         style: TextStyle(
-                          color: AppColors.yellow, // Use AppColors
+                          color: AppColors.yellow, // Updated text color
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -284,10 +308,16 @@ class _SignUpPageState extends State<SignUpPage> {
       child: TextFormField(
         controller: controller,
         obscureText: isPassword,
+        style: const TextStyle(
+          color: AppColors.blue, // Set input text color to black
+        ),
         decoration: InputDecoration(
           filled: true,
-          fillColor: AppColors.lightYellow, // Use AppColors
+          fillColor: AppColors.lightYellow, // Use AppColors for background
           hintText: label,
+          hintStyle: const TextStyle(
+            color: AppColors.blue, // Set hint text color to blue
+          ),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           border: OutlineInputBorder(
@@ -309,11 +339,15 @@ class _SignUpPageState extends State<SignUpPage> {
       String title, bool groupValue, Function(bool?) onChanged) {
     return Row(
       children: [
-        Text(title, style: TextStyle(color: Colors.white, fontSize: 16)),
+        Text(title,
+            style: const TextStyle(
+                color: AppColors.lightYellow,
+                fontSize: 16)), // Updated text color
         Checkbox(
           value: groupValue,
           onChanged: onChanged,
-          fillColor: MaterialStateProperty.all(Colors.white),
+          fillColor: MaterialStateProperty.all(
+              AppColors.lightYellow), // Updated checkbox color
         ),
       ],
     );

@@ -187,6 +187,7 @@ def calculate_gpa(request):
                 print(GRADE_VALUES[grade] ,"*", subject.credits,"=",gcredit)  # Log grade and credits
                 if grade != 'F':
                     semester_obj.earn_credits += subject.credits
+                    semester_obj.complte_courses += 1  # Increment complete courses count
         print("Total credits:", semester_obj.total_credits)  # Log total credits
         print("Total points:", semester_obj.total_points)  # Log total points   
         print("Earned credits:", semester_obj.earn_credits)  # Log earned credits

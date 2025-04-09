@@ -45,9 +45,9 @@ class _LoginPageState extends State<LoginPage> {
         final responseData = json.decode(response.body);
         final accessToken = responseData['access'];
         final refreshToken = responseData['refresh'];
-        final KTUID =
-            responseData['KTUID'] ?? 'N/A'; // Get KTUID from response,
-        // Log the tokens
+        final KTUID = responseData['KTUID'] ?? 'N/A';
+
+        // Log tokens
         print('Access Token: $accessToken');
         print('Refresh Token: $refreshToken');
 
@@ -143,16 +143,10 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Login'),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pushReplacementNamed(context, '/');
-          },
-        ),
+        title: const Text('Login'),
         backgroundColor: AppColors.blue, // Use AppColors for AppBar
       ),
-      backgroundColor: AppColors.lightBlue, // Use AppColors for background
+      backgroundColor: AppColors.blue, // Use AppColors for background
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -160,6 +154,8 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const SizedBox(height: 40),
+
                 // Logo
                 Center(
                   child: Image.asset(
@@ -171,16 +167,17 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 40),
 
                 // Login Title
-                const Text(
-                  'Login',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
+                const Center(
+                  child: Text(
+                    'Welcome Back!',
+                    style: TextStyle(
+                      color: AppColors.lightYellow, // Use AppColors for text
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-
-                const SizedBox(height: 40),
+                const SizedBox(height: 30),
 
                 // Email Field
                 _buildTextField('Email', _emailController),
@@ -196,7 +193,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.yellow, // Use AppColors
+                      backgroundColor: AppColors.lightYellow, // Use AppColors
                       padding: const EdgeInsets.symmetric(
                           horizontal: 50, vertical: 15),
                       shape: RoundedRectangleBorder(
@@ -204,11 +201,11 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     child: _isLoading
-                        ? CircularProgressIndicator()
+                        ? const CircularProgressIndicator(color: Colors.black)
                         : const Text(
                             'Login',
                             style: TextStyle(
-                              color: AppColors.blue, // Use AppColors
+                              color: AppColors.blue, // Use AppColors for text
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -228,22 +225,12 @@ class _LoginPageState extends State<LoginPage> {
                             builder: (context) => ChooseSignupPage()),
                       );
                     },
-                    child: RichText(
-                      text: const TextSpan(
-                        text: "Don't have an account? ",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                        ),
-                        children: [
-                          TextSpan(
-                            text: 'Sign Up',
-                            style: TextStyle(
-                              color: AppColors.yellow, // Use AppColors
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
+                    child: const Text(
+                      "Don't have an account? Sign Up",
+                      style: TextStyle(
+                        color: AppColors.lightYellow, // Use AppColors for text
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
@@ -266,37 +253,22 @@ class _LoginPageState extends State<LoginPage> {
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            placeholder,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-            ),
+      child: TextField(
+        controller: controller,
+        obscureText: isPassword,
+        style: const TextStyle(color: AppColors.blue), // Text inside field
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: AppColors.lightYellow, // Use AppColors for field
+          hintText: placeholder,
+          hintStyle: const TextStyle(color: AppColors.blue),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide.none,
           ),
-          const SizedBox(height: 5),
-          TextField(
-            controller: controller,
-            obscureText: isPassword,
-            style: const TextStyle(color: Colors.black),
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: AppColors.lightYellow, // Use AppColors
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.transparent, width: 1.0),
-                borderRadius: BorderRadius.circular(30.0),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.transparent, width: 2.0),
-                borderRadius: BorderRadius.circular(30.0),
-              ),
-              contentPadding:
-                  EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-            ),
-          ),
-        ],
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+        ),
       ),
     );
   }

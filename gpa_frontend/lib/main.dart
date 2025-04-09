@@ -16,26 +16,30 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter App',
+      debugShowCheckedModeBanner: false, // Removes the debug banner
+      title: 'GPA Calculator',
       theme: ThemeData(
         primaryColor: AppColors.blue,
-        scaffoldBackgroundColor: AppColors.lightBlue,
+        scaffoldBackgroundColor: AppColors.blue, // Blue for background
         appBarTheme: AppBarTheme(
-          backgroundColor: AppColors.blue,
-          foregroundColor: AppColors.lightYellow,
+          backgroundColor: AppColors.blue, // Blue for AppBar background
+          foregroundColor:
+              AppColors.lightYellow, // Light yellow for AppBar text
         ),
         buttonTheme: ButtonThemeData(
-          buttonColor: AppColors.yellow,
+          buttonColor: AppColors.lightYellow, // Light yellow for buttons
           textTheme: ButtonTextTheme.primary,
         ),
         textTheme: TextTheme(
-          bodyLarge: TextStyle(color: AppColors.blue), // Updated
-          bodyMedium: TextStyle(color: AppColors.blue), // Updated
-          displayLarge: TextStyle(color: AppColors.yellow), // Updated
+          bodyLarge: TextStyle(color: AppColors.blue), // Light yellow for fonts
+          bodyMedium:
+              TextStyle(color: AppColors.black), // Light yellow for fonts
+          displayLarge:
+              TextStyle(color: AppColors.lightYellow), // Light yellow for fonts
         ),
         floatingActionButtonTheme: FloatingActionButtonThemeData(
-          backgroundColor: AppColors.yellow,
-          foregroundColor: AppColors.lightBlue,
+          backgroundColor: AppColors.lightYellow, // Light yellow for FAB
+          foregroundColor: AppColors.blue, // Blue for FAB icon
         ),
       ),
       home: LoginPage(),

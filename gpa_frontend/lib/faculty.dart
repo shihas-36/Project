@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'package:gpa_frontend/auth/login_page.dart';
+import 'Theme/colors.dart'; // Import AppColors
 import 'package:gpa_frontend/export.dart'; // Import the existing export package
 
 const String baseUrl = 'http://10.0.2.2:8000'; // Example base URL
@@ -105,7 +106,7 @@ class FacultyPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Faculty Dashboard'),
-        backgroundColor: const Color.fromARGB(255, 20, 53, 89),
+        backgroundColor: AppColors.blue, // Use AppColors for AppBar
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -139,30 +140,61 @@ class FacultyPage extends StatelessWidget {
               itemCount: students.length,
               itemBuilder: (context, index) {
                 final student = students[index];
-                return ListTile(
-                  title: Text(student['name']),
-                  subtitle: Text(
-                    'Reg No: ${student['KTUID'] ?? 'N/A'}\n'
-                    'Degree: ${student['degree'] ?? 'Unknown'}, '
-                    'Semester: ${student['semester'] ?? ''}\n'
-                    'CGPA: ${student['cgpa'] ?? ''}',
-                  ),
-                  isThreeLine: true,
-                  trailing: IconButton(
-                    icon: const Icon(Icons.download),
-                    onPressed: () async {
-                      try {
-                        // Use the existing export functionality
-                        await ExportPage().fetchAndGeneratePDF(
-                          context, // Pass the BuildContext
-                          student['KTUID'] ?? 'N/A', // Pass the KTUID
-                        );
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error: $e')),
-                        );
-                      }
-                    },
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 8.0),
+                  child: Card(
+                    color: AppColors.yellow,
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            student['name'],
+                            style: const TextStyle(
+                              fontSize: 18,
+                              color: AppColors.lightYellow,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text('Reg No: ${student['KTUID'] ?? 'N/A'}'),
+                          Text('Degree: ${student['degree'] ?? 'Unknown'}'),
+                          Text('Semester: ${student['semester'] ?? ''}'),
+                          Text('CGPA: ${student['cgpa'] ?? ''}'),
+                          const SizedBox(height: 12),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                try {
+                                  await ExportPage().fetchAndGeneratePDF(
+                                    context,
+                                    student['KTUID'] ?? 'N/A',
+                                  );
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Error: $e')),
+                                  );
+                                }
+                              },
+                              icon: const Icon(Icons.download),
+                              label: const Text('Download PDF'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.blue,
+                                foregroundColor: AppColors.lightYellow,
+                                // Use AppColors for AppBar,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 );
               },

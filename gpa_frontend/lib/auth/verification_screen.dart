@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../gpa.dart'; // Adjust the path if necessary
+import 'login_page.dart';
+import '../theme/colors.dart'; // Import AppColors
 
 class VerificationScreen extends StatefulWidget {
   final String email;
@@ -44,12 +45,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Email verified successfully!')),
         );
-        // Navigate to GPA screen
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-              builder: (context) =>
-                  GpaCalculator()), // Replace with your GPA screen
+          MaterialPageRoute(builder: (context) => LoginPage()),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -57,7 +55,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
         );
       }
     } catch (e) {
-      print('Error: $e'); // Print the error for debugging
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
@@ -97,8 +94,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Verify Email'),
+        title: const Text('Verify Email'),
+        backgroundColor: AppColors.blue, // Use AppColors for AppBar
       ),
+      backgroundColor: AppColors.blue, // Use AppColors for background
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -106,30 +105,63 @@ class _VerificationScreenState extends State<VerificationScreen> {
           children: [
             Text(
               'Enter the OTP sent to your email',
-              style: TextStyle(fontSize: 18),
+              style: TextStyle(
+                fontSize: 18,
+                color: AppColors.lightYellow, // Use AppColors for text
+              ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             TextField(
               controller: _otpController,
               keyboardType: TextInputType.number,
+              style:
+                  TextStyle(color: AppColors.blue), // Text color inside field
               decoration: InputDecoration(
+                filled: true,
+                fillColor: AppColors.lightYellow, // Use AppColors for field
                 labelText: 'OTP',
-                border: OutlineInputBorder(),
+                labelStyle: TextStyle(color: AppColors.blue),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _isVerifying ? null : _verifyOTP,
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    AppColors.lightYellow, // Use AppColors for button
+                padding:
+                    const EdgeInsets.symmetric(vertical: 15, horizontal: 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
               child: _isVerifying
-                  ? CircularProgressIndicator()
-                  : Text('Verify OTP'),
+                  ? const CircularProgressIndicator(color: Colors.black)
+                  : const Text(
+                      'Verify OTP',
+                      style: TextStyle(
+                        color: AppColors.blue, // Use AppColors for button text
+                        fontSize: 16,
+                      ),
+                    ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             TextButton(
               onPressed: _isResending ? null : _resendOTP,
               child: _isResending
-                  ? CircularProgressIndicator()
-                  : Text('Resend OTP'),
+                  ? const CircularProgressIndicator(
+                      color: AppColors.lightYellow)
+                  : const Text(
+                      'Resend OTP',
+                      style: TextStyle(
+                        color: AppColors.lightYellow, // Use AppColors for text
+                        fontSize: 16,
+                      ),
+                    ),
             ),
           ],
         ),

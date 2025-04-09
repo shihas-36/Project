@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'theme/colors.dart';
 
 class GpaCalculator extends StatefulWidget {
   @override
@@ -21,8 +22,8 @@ class _GpaCalculatorState extends State<GpaCalculator>
 
   final Map<String, double> gradeValues = {
     'S': 10,
-    'A': 9,
-    'A+': 8.5,
+    'A': 8.5,
+    'A+': 9,
     'B+': 8,
     'B': 7.5,
     'C+': 7,
@@ -255,15 +256,15 @@ class _GpaCalculatorState extends State<GpaCalculator>
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.white, Colors.blue[50]!],
+          colors: [AppColors.lightYellow, AppColors.yellow],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: AppColors.lightBlue),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: AppColors.lightBlue.withOpacity(0.2),
             spreadRadius: 2,
             blurRadius: 5,
             offset: Offset(0, 3),
@@ -317,11 +318,11 @@ class _GpaCalculatorState extends State<GpaCalculator>
               margin: EdgeInsets.only(left: 8),
               decoration: BoxDecoration(
                 color: Colors.white,
-                border: Border.all(color: Colors.grey[300]!),
+                border: Border.all(color: AppColors.lightBlue),
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.2),
+                    color: AppColors.lightBlue.withOpacity(0.2),
                     spreadRadius: 2,
                     blurRadius: 5,
                     offset: Offset(0, 3),
@@ -370,15 +371,14 @@ class _GpaCalculatorState extends State<GpaCalculator>
       padding: EdgeInsets.all(16),
       child: Column(
         children: [
-          Text(
-            semester.replaceAll('_', ' ').toUpperCase(),
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.blue[800],
-            ),
-          ),
           SizedBox(height: 16),
+          SemesterSummaryCard(
+            grades: grades,
+            credits: credits,
+            gradeValues: gradeValues,
+            subjectsStructure: subjectsStructure,
+          ),
+          SizedBox(height: 20),
           ...slots.entries.map((slotEntry) {
             final slotName = slotEntry.key;
             final courses = slotEntry.value;
@@ -389,38 +389,10 @@ class _GpaCalculatorState extends State<GpaCalculator>
                   subjectsStructure.keys.elementAt(_tabController.index))
             Column(
               children: [
+                _buildResultsCard(),
                 SizedBox(height: 20),
                 Divider(),
                 SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Column(
-                      children: [
-                        Text('SEMESTER GPA',
-                            style: TextStyle(
-                                fontSize: 14, color: Colors.grey[700])),
-                        Text(gpa?.toStringAsFixed(2) ?? 'N/A',
-                            style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue[800])),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        Text('CGPA',
-                            style: TextStyle(
-                                fontSize: 14, color: Colors.grey[700])),
-                        Text(cgpa?.toStringAsFixed(2) ?? 'N/A',
-                            style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue[800])),
-                      ],
-                    ),
-                  ],
-                ),
                 SizedBox(height: 20),
               ],
             ),
@@ -433,6 +405,49 @@ class _GpaCalculatorState extends State<GpaCalculator>
     );
   }
 
+  Widget _buildResultsCard() {
+    return Card(
+      color: AppColors.yellow,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            const Text(
+              'Results',
+              style: TextStyle(
+                  fontSize: 18,
+                  color: AppColors.black,
+                  fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildResultColumn('Semester GPA', gpa),
+                _buildResultColumn('CGPA', cgpa),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResultColumn(String label, double? value) {
+    return Column(
+      children: [
+        Text(label),
+        Text(
+          value?.toStringAsFixed(2) ?? 'N/A',
+          style: const TextStyle(
+              fontSize: 24,
+              color: AppColors.black,
+              fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -442,6 +457,9 @@ class _GpaCalculatorState extends State<GpaCalculator>
             ? TabBar(
                 controller: _tabController,
                 isScrollable: true,
+                labelColor: AppColors.lightYellow, // Active tab text color
+                unselectedLabelColor: Colors.grey, // Inactive tab text color
+                indicatorColor: AppColors.lightYellow, // Indicator color
                 tabs: subjectsStructure.keys.map((semester) {
                   return Tab(text: semester.replaceAll('_', ' ').toUpperCase());
                 }).toList(),
@@ -456,6 +474,13 @@ class _GpaCalculatorState extends State<GpaCalculator>
               }).toList(),
             )
           : Center(child: CircularProgressIndicator()),
+      floatingActionButton: FloatingActionButton(
+        onPressed: isLoading ? null : calculateGPA,
+        backgroundColor: AppColors.primaryBlue,
+        child: isLoading
+            ? CircularProgressIndicator(color: Colors.white)
+            : Icon(Icons.calculate, size: 24, color: Colors.white),
+      ),
     );
   }
 }
@@ -476,17 +501,125 @@ class CalculateButton extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         minimumSize: Size(double.infinity, 50),
         padding: EdgeInsets.symmetric(vertical: 12),
-        backgroundColor: Colors.blue[800],
+        backgroundColor: AppColors.blue,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
       ),
       child: isLoading
           ? CircularProgressIndicator(color: Colors.white)
-          : Text(
-              'CALCULATE GPA',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          : Icon(
+              Icons.calculate, // Calculator icon
+              size: 24,
+              color: Colors.white,
             ),
+    );
+  }
+}
+
+class SemesterSummaryCard extends StatelessWidget {
+  final Map<String, String?> grades;
+  final Map<String, int> credits;
+  final Map<String, double> gradeValues;
+  final Map<String, Map<String, Map<String, int>>> subjectsStructure;
+
+  const SemesterSummaryCard({
+    required this.grades,
+    required this.credits,
+    required this.gradeValues,
+    required this.subjectsStructure,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    int totalCredits = grades.entries.fold(0, (sum, entry) {
+      final grade = entry.value;
+      final credit = credits[entry.key] ?? 0;
+      return grade != 'F' ? sum + credit : sum;
+    });
+
+    int earnedCredits = grades.entries.fold(0, (sum, entry) {
+      final grade = entry.value;
+      final credit = credits[entry.key] ?? 0;
+      return grade != null && grade != 'F' ? sum + credit : sum;
+    });
+
+    double totalPoints = grades.entries.fold(0.0, (sum, entry) {
+      final grade = entry.value;
+      final credit = credits[entry.key] ?? 0;
+      return grade != null ? sum + (gradeValues[grade] ?? 0) * credit : sum;
+    });
+
+    bool allGradesSelected = grades.values.every((grade) => grade != null);
+
+    return Card(
+      color: AppColors.yellow,
+      margin: EdgeInsets.only(bottom: 16),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Semester Summary',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildSummaryItem('Total Credits', '$totalCredits'),
+                _buildSummaryItem('Earned Credits', '$earnedCredits'),
+              ],
+            ),
+            SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildSummaryItem(
+                  'Completion',
+                  '${grades.values.where((g) => g != null).length}/${grades.length}',
+                ),
+                _buildSummaryItem(
+                  'saved GPA',
+                  allGradesSelected
+                      ? (totalPoints / totalCredits).toStringAsFixed(2)
+                      : 'N/A',
+                  isHighlighted: allGradesSelected,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryItem(String label, String value,
+      {bool isHighlighted = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            color: AppColors.black,
+          ),
+        ),
+        SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: isHighlighted ? AppColors.black : Colors.black,
+          ),
+        ),
+      ],
     );
   }
 }

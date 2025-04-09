@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'signup_page.dart';
 import 'faculty_signup_page.dart';
+import '../theme/colors.dart'; // Import AppColors
 
 class ChooseSignupPage extends StatelessWidget {
   @override
@@ -8,9 +9,9 @@ class ChooseSignupPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Choose Signup Type'),
-        backgroundColor: const Color.fromARGB(255, 20, 53, 89),
+        backgroundColor: AppColors.blue, // Use AppColors for AppBar background
       ),
-      backgroundColor: const Color.fromARGB(255, 20, 53, 89),
+      backgroundColor: AppColors.blue, // Use AppColors for background
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -23,7 +24,8 @@ class ChooseSignupPage extends StatelessWidget {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF8F0E3),
+                backgroundColor:
+                    AppColors.lightYellow, // Use AppColors for button
                 padding:
                     const EdgeInsets.symmetric(vertical: 15, horizontal: 50),
                 shape: RoundedRectangleBorder(
@@ -32,7 +34,10 @@ class ChooseSignupPage extends StatelessWidget {
               ),
               child: const Text(
                 'Student Signup',
-                style: TextStyle(color: Colors.black, fontSize: 18),
+                style: TextStyle(
+                  color: AppColors.blue, // Use AppColors for button text
+                  fontSize: 18,
+                ),
               ),
             ),
             const SizedBox(height: 20),
@@ -44,7 +49,8 @@ class ChooseSignupPage extends StatelessWidget {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF8F0E3),
+                backgroundColor:
+                    AppColors.lightYellow, // Use AppColors for button
                 padding:
                     const EdgeInsets.symmetric(vertical: 15, horizontal: 50),
                 shape: RoundedRectangleBorder(
@@ -53,7 +59,10 @@ class ChooseSignupPage extends StatelessWidget {
               ),
               child: const Text(
                 'Faculty Signup',
-                style: TextStyle(color: Colors.black, fontSize: 18),
+                style: TextStyle(
+                  color: AppColors.blue, // Use AppColors for button text
+                  fontSize: 18,
+                ),
               ),
             ),
           ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gpa_frontend/theme/colors.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -99,8 +100,8 @@ class SummaryBox extends StatelessWidget {
       margin: EdgeInsets.symmetric(vertical: 8.0),
       padding: EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: Color(0xFFFCE19C), // Light Yellow
-        border: Border.all(color: Color(0xFFFFCE0A)), // Yellow
+        color: AppColors.lightYellow, // Light Yellow
+        border: Border.all(color: AppColors.primaryBlue), // Yellow
         borderRadius: BorderRadius.circular(8.0),
       ),
       child: Row(
@@ -111,7 +112,7 @@ class SummaryBox extends StatelessWidget {
             style: TextStyle(
               fontSize: 18.0,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF476C9B), // Blue
+              color: AppColors.primaryBlue, // Blue
               fontFamily: 'Vanilla',
             ),
           ),
@@ -119,7 +120,7 @@ class SummaryBox extends StatelessWidget {
             value,
             style: TextStyle(
               fontSize: 18.0,
-              color: Color(0xFF476C9B), // Blue
+              color: AppColors.primaryBlue, // Blue
               fontFamily: 'Vanilla',
             ),
           ),

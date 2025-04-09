@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:gpa_frontend/theme/colors.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:collection';
@@ -275,16 +276,25 @@ class _GradeCalculatorPageState extends State<GradeCalculatorPage>
         ? currentSubject
         : (courses.isNotEmpty ? courses.keys.first : null);
 
+    // Get the current grade for the valid subject
+    final currentGrade =
+        (validSubject != null && gradeResults[semester] != null)
+            ? gradeResults[semester]![validSubject]
+            : null;
+
     return Container(
       margin: EdgeInsets.symmetric(vertical: 8),
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.white, Colors.blue[50]!],
+          colors: [
+            AppColors.lightBlue,
+            AppColors.primaryBlue,
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: AppColors.lightYellow),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -310,7 +320,6 @@ class _GradeCalculatorPageState extends State<GradeCalculatorPage>
                     style: TextStyle(fontSize: 16, color: Colors.black),
                     items: [
                       ...Set.from(courses.keys).map((course) {
-                        // Use Set.from to remove duplicates
                         return DropdownMenuItem<String>(
                           value: course,
                           child: Text(course),
@@ -324,9 +333,7 @@ class _GradeCalculatorPageState extends State<GradeCalculatorPage>
 
                         final prev = selectedSubjects[semester]![slot];
                         if (prev != null) {
-                          selectedGrades[semester]?.remove(prev);
-                          gradeResults[semester]?.remove(
-                              prev); // Clear grade when changing subject
+                          gradeResults[semester]?.remove(prev);
                         }
 
                         selectedSubjects[semester]![slot] = value;
@@ -335,26 +342,34 @@ class _GradeCalculatorPageState extends State<GradeCalculatorPage>
                   ),
           ),
           if (validSubject != null)
-            Container(
-              width: 80,
-              height: 40,
-              margin: EdgeInsets.only(left: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: Colors.grey[300]!),
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.2),
-                    spreadRadius: 2,
-                    blurRadius: 5,
-                    offset: Offset(0, 3),
+            GestureDetector(
+              onTap: () => _showMarksDialog(validSubject, semester),
+              child: Container(
+                width: 80,
+                height: 40,
+                margin: EdgeInsets.only(left: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: AppColors.lightYellow),
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    currentGrade ?? 'Enter Marks',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 12,
+                    ),
                   ),
-                ],
-              ),
-              child: TextButton(
-                onPressed: () => _showMarksDialog(validSubject!, semester),
-                child: SizedBox.shrink(),
+                ),
               ),
             ),
         ],
@@ -374,36 +389,15 @@ class _GradeCalculatorPageState extends State<GradeCalculatorPage>
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.blue[800],
+              color: AppColors.blue,
             ),
           ),
           SizedBox(height: 20),
 
-          // Display grade results
-          if (gradeResults[semester]?.isNotEmpty ?? false)
-            Column(
-              children: [
-                Text(
-                  'Grade Results',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                ...gradeResults[semester]!.entries.map((entry) => ListTile(
-                      title: Text(entry.key),
-                      trailing: Text(entry.value ?? ''),
-                    )),
-                Divider(),
-              ],
-            ),
-
+          // Render course cards
           ...slots.entries.map((slotEntry) {
             final slotName = slotEntry.key;
             final courses = slotEntry.value;
-
-            // Debug print to verify rendering
-            print('Rendering slot $slotName with courses: ${courses.keys}');
 
             return _buildCourseCard(semester, slotName, courses);
           }).toList(),
@@ -416,11 +410,14 @@ class _GradeCalculatorPageState extends State<GradeCalculatorPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Grade Calculator'),
+        title: Text('Mark-Grade Converter'),
         bottom: subjectsStructure.isNotEmpty
             ? TabBar(
                 controller: _tabController,
                 isScrollable: true,
+                labelColor: AppColors.lightYellow, // Active tab text color
+                unselectedLabelColor: Colors.grey, // Inactive tab text color
+                indicatorColor: AppColors.lightYellow, // Indicator color
                 tabs: subjectsStructure.keys.map((semester) {
                   return Tab(text: semester.replaceAll('_', ' ').toUpperCase());
                 }).toList(),

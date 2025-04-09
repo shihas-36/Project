@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:gpa_frontend/theme/colors.dart'; // Import AppColors,
 
 class MinorCalculatorPage extends StatefulWidget {
   @override
@@ -271,6 +272,10 @@ class _MinorCalculatorPageState extends State<MinorCalculatorPage> {
     }
   }
 
+  String _truncateSubject(String subject) {
+    return subject.length > 5 ? '${subject.substring(0, 5)}...' : subject;
+  }
+
   Widget _buildDropdowns(String type) {
     final buckets = type == 'Minor' ? _minorBuckets : _honorBuckets;
     final selectedBucket =
@@ -298,7 +303,13 @@ class _MinorCalculatorPageState extends State<MinorCalculatorPage> {
             items: buckets.keys.map<DropdownMenuItem<String>>((String bucket) {
               return DropdownMenuItem<String>(
                 value: bucket,
-                child: Text(bucket),
+                child: Text(
+                  bucket,
+                  style: TextStyle(
+                    color: AppColors.yellow, // Set bucket text color to yellow
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               );
             }).toList(),
           ),
@@ -321,10 +332,18 @@ class _MinorCalculatorPageState extends State<MinorCalculatorPage> {
                   children: [
                     Text(
                       semester.split('_').last,
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors
+                            .yellow, // Set semester text color to yellow
+                      ),
                     ),
                     DropdownButton<String>(
-                      value: selectedSubject,
+                      value: buckets[selectedBucket]?[semester]
+                                  ?.containsKey(selectedSubject) ==
+                              true
+                          ? selectedSubject
+                          : null, // Ensure the value exists
                       onChanged: (String? newValue) {
                         setState(() {
                           selectedSubjects[semester] = newValue!;
@@ -335,36 +354,54 @@ class _MinorCalculatorPageState extends State<MinorCalculatorPage> {
                           .map<DropdownMenuItem<String>>((String subject) {
                         return DropdownMenuItem<String>(
                           value: subject,
-                          child: Text(subject),
+                          child: Text(
+                            _truncateSubject(subject),
+                            style: TextStyle(
+                              color: AppColors
+                                  .yellow, // Set subject text color to yellow
+                            ),
+                            overflow: TextOverflow.ellipsis, // Handle overflow
+                          ),
                         );
                       }).toList(),
                     ),
                     DropdownButton<String>(
-                      value: _gradeControllers[selectedSubject]?.text,
+                      value: _grades.contains(
+                              _gradeControllers[selectedSubject]?.text)
+                          ? _gradeControllers[selectedSubject]?.text
+                          : null, // Ensure the value exists
                       onChanged: (String? newValue) {
                         setState(() {
                           _gradeControllers[selectedSubject]?.text = newValue!;
-                          _calculateNewSgpa(
-                              semester, type); // Calculate SGPA on grade change
                         });
                       },
                       items:
                           _grades.map<DropdownMenuItem<String>>((String grade) {
                         return DropdownMenuItem<String>(
                           value: grade,
-                          child: Text(grade),
+                          child: Text(
+                            grade,
+                            style: TextStyle(
+                              color: AppColors
+                                  .yellow, // Set grade text color to yellow
+                            ),
+                          ),
                         );
                       }).toList(),
                     ),
                     if (_sgpaMap[semester] != null)
                       Text(
                         'SGPA: ${_sgpaMap[semester]!.toStringAsFixed(2)}',
-                        style: TextStyle(fontSize: 16),
+                        style: TextStyle(
+                            color: AppColors.yellow,
+                            fontSize: 16), // SGPA text color
                       )
                     else
                       Text(
                         'SGPA: 0.00',
-                        style: TextStyle(fontSize: 16),
+                        style: TextStyle(
+                            color: AppColors.yellow,
+                            fontSize: 16), // SGPA text color
                       ),
                   ],
                 ),
@@ -383,13 +420,13 @@ class _MinorCalculatorPageState extends State<MinorCalculatorPage> {
         title: const Text(
           'Minor Calculator',
           style: TextStyle(
-            color: Color(0xFFFFCE0A), // Yellow
+            color: AppColors.yellow, // Yellow
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: const Color(0xFF476C9B), // Blue
+        backgroundColor: AppColors.blue, // Blue
       ),
-      backgroundColor: const Color(0xFFADD9F4), // Light Blue
+      backgroundColor: AppColors.blue, // Light Blue
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -402,7 +439,9 @@ class _MinorCalculatorPageState extends State<MinorCalculatorPage> {
                       Text(
                         'MINOR',
                         style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+                            fontSize: 18,
+                            color: AppColors.yellow,
+                            fontWeight: FontWeight.bold),
                       ),
                       _buildDropdowns('Minor'),
                       SizedBox(height: 20),
@@ -411,7 +450,9 @@ class _MinorCalculatorPageState extends State<MinorCalculatorPage> {
                       Text(
                         'HONOR',
                         style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+                            fontSize: 18,
+                            color: AppColors.yellow,
+                            fontWeight: FontWeight.bold),
                       ),
                       _buildDropdowns('Honor'),
                     ],

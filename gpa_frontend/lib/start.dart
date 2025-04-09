@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gpa_frontend/theme/colors.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -364,23 +365,23 @@ class _StartPageState extends State<StartPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF00487F), // Primary Blue
+      backgroundColor: AppColors.blue, // Primary Blue
       appBar: AppBar(
         title: const Text(
           'Academic Performance',
           style: TextStyle(
-            color: Color(0xFFDABECA), // Light Pink
+            color: AppColors.lightYellow, // Light Pink
             fontWeight: FontWeight.bold,
           ),
         ),
         centerTitle: true,
-        backgroundColor: const Color(0xFF00487F), // Primary Blue
+        backgroundColor: AppColors.blue, // Primary Blue
         elevation: 0,
         iconTheme: const IconThemeData(color: Color(0xFFDABECA)), // Light Pink
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications),
-            color: const Color(0xFFDABECA), // Light Pink
+            color: AppColors.lightYellow, // Light Pink
             onPressed: () {
               Navigator.push(
                 context,
@@ -390,7 +391,7 @@ class _StartPageState extends State<StartPage> {
           ),
           IconButton(
             icon: const Icon(Icons.logout),
-            color: const Color(0xFFDABECA), // Light Pink
+            color: AppColors.lightYellow, // Light Pink
             onPressed: () async {
               await storage.delete(key: 'auth_token');
               await storage.delete(key: 'refresh_token');
@@ -405,7 +406,7 @@ class _StartPageState extends State<StartPage> {
       body: isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                color: Color(0xFFDABECA), // Light Pink
+                color: AppColors.lightBlue, // Light Pink
               ),
             )
           : errorMessage.isNotEmpty
@@ -416,7 +417,7 @@ class _StartPageState extends State<StartPage> {
                       Text(
                         errorMessage,
                         style: const TextStyle(
-                          color: Color(0xFFDABECA), // Light Pink
+                          color: AppColors.lightBlue, // Light Pink
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -424,8 +425,7 @@ class _StartPageState extends State<StartPage> {
                         onPressed: _fetchAcademicData,
                         child: const Text('Retry'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              const Color(0xFFDABECA), // Light Pink
+                          backgroundColor: AppColors.lightBlue, // Light Pink
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -463,7 +463,7 @@ class _StartPageState extends State<StartPage> {
       },
       child: Card(
         elevation: 2,
-        color: const Color(0xFFF6F5AE), // Light Yellow
+        color: AppColors.lightYellow, // Light Yellow
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -495,7 +495,7 @@ class _StartPageState extends State<StartPage> {
                           title: AxisTitle(
                             text: 'Semester',
                             textStyle: const TextStyle(
-                              color: Color(0xFF00487F), // Primary Blue
+                              color: AppColors.blue, // Primary Blue
                             ),
                           ),
                           labelRotation: -45,
@@ -508,7 +508,7 @@ class _StartPageState extends State<StartPage> {
                           title: AxisTitle(
                             text: 'GPA',
                             textStyle: const TextStyle(
-                              color: Color(0xFF00487F), // Primary Blue
+                              color: AppColors.blue, // Primary Blue
                             ),
                           ),
                           majorGridLines: const MajorGridLines(width: 0),
@@ -521,13 +521,13 @@ class _StartPageState extends State<StartPage> {
                             xValueMapper: (data, _) => data.semesterName,
                             yValueMapper: (data, _) => data.gpa,
                             name: 'GPA',
-                            color: const Color(0xFFF6AE2D), // Orange
+                            color: AppColors.blue, // Orange
                             width: 3,
                             markerSettings: const MarkerSettings(
                               isVisible: true,
                               shape: DataMarkerType.circle,
                               borderWidth: 2,
-                              borderColor: Color(0xFFF6AE2D), // Orange
+                              borderColor: Color(0xFF00487F), // Orange
                             ),
                             dataLabelSettings: const DataLabelSettings(
                               isVisible: true,
@@ -555,6 +555,7 @@ class _StartPageState extends State<StartPage> {
   Widget _buildCurrentSemesterCard() {
     return Card(
       elevation: 2,
+      color: AppColors.lightYellow,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -566,15 +567,22 @@ class _StartPageState extends State<StartPage> {
             const Text('Current Semester',
                 style: TextStyle(
                   fontSize: 18,
+                  color: Color(0xFF00487F),
                   fontWeight: FontWeight.bold,
                 )),
             const SizedBox(height: 12),
-            Text(currentSemester, style: const TextStyle(fontSize: 16)),
+            Text(
+              currentSemester,
+              style: const TextStyle(
+                fontSize: 16,
+                color: AppColors.lightBlue,
+              ),
+            ),
             const SizedBox(height: 8),
             Text('SGPA: ${currentSgpa.toStringAsFixed(2)}',
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.blue[800],
+                  color: AppColors.lightBlue,
                   fontWeight: FontWeight.bold,
                 )),
             const SizedBox(height: 16),
@@ -587,14 +595,15 @@ class _StartPageState extends State<StartPage> {
                       builder: (context) => GradeCalculatorPage()),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[600],
+                  backgroundColor: AppColors.lightBlue,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-                child:
-                    const Text('View Grades', style: TextStyle(fontSize: 16)),
+                child: const Text('View Grades',
+                    style:
+                        TextStyle(fontSize: 16, color: AppColors.lightYellow)),
               ),
             ),
           ],
@@ -607,12 +616,12 @@ class _StartPageState extends State<StartPage> {
     return Row(
       children: [
         Expanded(
-          child: _buildGpaCard('CGPA', currentCgpa, Colors.blue[800]!),
+          child: _buildGpaCard('CGPA', currentCgpa, AppColors.lightBlue!),
         ),
         const SizedBox(width: 12),
         Expanded(
           child:
-              _buildGpaCard('Minor GPA', currentMinorGpa, Colors.green[600]!),
+              _buildGpaCard('Minor GPA', currentMinorGpa, AppColors.lightBlue!),
         ),
       ],
     );
@@ -620,6 +629,7 @@ class _StartPageState extends State<StartPage> {
 
   Widget _buildGpaCard(String title, double value, Color color) {
     return Card(
+      color: AppColors.lightYellow,
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -653,11 +663,11 @@ class _StartPageState extends State<StartPage> {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         _buildActionButton(
-            Icons.calculate, 'Minor', const Color(0xFFDABECA)), // Light Pink
+            Icons.calculate, 'Minor', AppColors.lightYellow), // Light Pink
         _buildActionButton(
-            Icons.summarize, 'Summary', const Color(0xFFDABECA)), // Light Pink
+            Icons.summarize, 'Summary', AppColors.lightYellow), // Light Pink
         _buildActionButton(
-            Icons.download, 'Export', const Color(0xFFDABECA)), // Light Pink
+            Icons.download, 'Export', AppColors.lightYellow), // Light Pink
       ],
     );
   }

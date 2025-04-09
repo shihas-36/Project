@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:gpa_frontend/faculty.dart';
+import '../theme/colors.dart'; // Import AppColors
 
 class FacultySignUpPage extends StatefulWidget {
   @override
@@ -17,6 +18,8 @@ class _FacultySignUpPageState extends State<FacultySignUpPage> {
       TextEditingController();
   final TextEditingController _collegeCodeController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _ktuidController =
+      TextEditingController(); // New KTUID controller
   final storage = FlutterSecureStorage();
   bool _isLoading = false;
 
@@ -35,20 +38,16 @@ class _FacultySignUpPageState extends State<FacultySignUpPage> {
       final userData = {
         'email': _emailController.text,
         'password': _passwordController.text,
-        'college_code':
-            _collegeCodeController.text, // Changed key to match backend
+        'college_code': _collegeCodeController.text,
         'username': _usernameController.text,
+        'KTUID': _ktuidController.text, // Include KTUID in the request
       };
-
-      print("Request payload: $userData"); // Log the request payload
 
       final signUpResponse = await http.post(
         Uri.parse('http://10.0.2.2:8000/api/faculty/'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(userData),
       );
-
-      print("Signup response: ${signUpResponse.body}"); // Log signup response
 
       if (signUpResponse.statusCode != 201) {
         throw jsonDecode(signUpResponse.body)['error'] ?? 'Signup failed';
@@ -62,8 +61,6 @@ class _FacultySignUpPageState extends State<FacultySignUpPage> {
           'password': _passwordController.text,
         }),
       );
-
-      print("Login response: ${loginResponse.body}"); // Log login response
 
       if (loginResponse.statusCode != 200) {
         throw jsonDecode(loginResponse.body)['error'] ?? 'Login failed';
@@ -96,9 +93,9 @@ class _FacultySignUpPageState extends State<FacultySignUpPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Faculty Sign Up'),
-        backgroundColor: const Color.fromARGB(255, 20, 53, 89),
+        backgroundColor: AppColors.blue, // Use AppColors for AppBar
       ),
-      backgroundColor: const Color.fromARGB(255, 20, 53, 89),
+      backgroundColor: AppColors.blue, // Use AppColors for background
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -113,7 +110,7 @@ class _FacultySignUpPageState extends State<FacultySignUpPage> {
                     child: Text(
                       'Faculty Sign Up',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.lightYellow, // Use AppColors for text
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
                       ),
@@ -128,12 +125,13 @@ class _FacultySignUpPageState extends State<FacultySignUpPage> {
                       isPassword: true),
                   _buildTextField(_collegeCodeController, 'College Code'),
                   _buildTextField(_usernameController, 'Username'),
+                  _buildTextField(_ktuidController, 'KTUID'), // New KTUID field
                   const SizedBox(height: 30),
                   Center(
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _signupFaculty,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF8F0E3),
+                        backgroundColor: AppColors.yellow, // Use AppColors
                         padding: const EdgeInsets.symmetric(
                             vertical: 15, horizontal: 50),
                         shape: RoundedRectangleBorder(
@@ -144,8 +142,8 @@ class _FacultySignUpPageState extends State<FacultySignUpPage> {
                           ? const CircularProgressIndicator(color: Colors.black)
                           : const Text(
                               'Sign Up',
-                              style:
-                                  TextStyle(color: Colors.black, fontSize: 18),
+                              style: TextStyle(
+                                  color: AppColors.blue, fontSize: 18),
                             ),
                     ),
                   ),
@@ -165,10 +163,16 @@ class _FacultySignUpPageState extends State<FacultySignUpPage> {
       child: TextFormField(
         controller: controller,
         obscureText: isPassword,
+        style: const TextStyle(
+          color: AppColors.blue, // Set input text color to black
+        ),
         decoration: InputDecoration(
           filled: true,
-          fillColor: const Color(0xFFF8F0E3),
+          fillColor: AppColors.lightYellow, // Use AppColors for background
           hintText: label,
+          hintStyle: const TextStyle(
+            color: AppColors.blue, // Set hint text color to blue
+          ),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           border: OutlineInputBorder(

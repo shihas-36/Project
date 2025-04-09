@@ -1,625 +1,375 @@
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+/*import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'login_page.dart';
+import '../services/api_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
+import '../gpa.dart';
 
-class SubjectCard extends StatefulWidget {
-  final String subjectName;
-  final int credits;
-  final String? selectedGrade;
-  final ValueChanged<String?> onGradeChanged;
-  final Map<String, double> gradeValues;
-
-  const SubjectCard({
-    required this.subjectName,
-    required this.credits,
-    required this.selectedGrade,
-    required this.onGradeChanged,
-    required this.gradeValues,
-  });
-
+class SignUpPage extends StatefulWidget {
   @override
-  _SubjectCardState createState() => _SubjectCardState();
+  _SignUpPageState createState() => _SignUpPageState();
 }
 
-class _SubjectCardState extends State<SubjectCard> {
-  bool _isTapped = false;
-
-  Color _getGradeColor(String grade) {
-    switch (grade) {
-      case 'S':
-        return Colors.green[800]!;
-      case 'A':
-        return Colors.green;
-      case 'A+':
-        return Colors.lightGreen;
-      case 'B+':
-        return Colors.blue;
-      case 'B':
-        return Colors.blue[400]!;
-      case 'C+':
-        return Colors.orange;
-      case 'C':
-        return Colors.orange[400]!;
-      case 'D+':
-        return Colors.red[400]!;
-      case 'P':
-        return Colors.red[300]!;
-      case 'F':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isTapped = true),
-      onTapUp: (_) => setState(() => _isTapped = false),
-      onTapCancel: () => setState(() => _isTapped = false),
-      child: AnimatedContainer(
-        duration: Duration(milliseconds: 100),
-        transform: Matrix4.identity()..scale(_isTapped ? 0.98 : 1.0),
-        child: Card(
-          elevation: 2,
-          margin: EdgeInsets.symmetric(vertical: 6),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.subjectName,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Credits: ${widget.credits}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: widget.selectedGrade != null
-                        ? _getGradeColor(widget.selectedGrade!)
-                        : Colors.grey[200],
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: widget.selectedGrade,
-                      hint: Text(
-                        'Select',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      dropdownColor: Colors.white,
-                      icon: Icon(Icons.arrow_drop_down),
-                      style: TextStyle(
-                        color: widget.selectedGrade != null
-                            ? Colors.white
-                            : Colors.black,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      onChanged: (value) {
-                        widget.onGradeChanged(value);
-                      },
-                      items: widget.gradeValues.keys.map((String grade) {
-                        return DropdownMenuItem<String>(
-                          value: grade,
-                          child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 8),
-                            decoration: BoxDecoration(
-                              color: _getGradeColor(grade),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Center(
-                              child: Text(
-                                grade,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class SemesterSummaryCard extends StatelessWidget {
-  final Map<String, String?> grades;
-  final Map<String, int> credits;
-  final Map<String, double> gradeValues;
-
-  const SemesterSummaryCard({
-    required this.grades,
-    required this.credits,
-    required this.gradeValues,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    int totalCredits = 0;
-    int earnedCredits = 0;
-    double totalPoints = 0;
-    bool allGradesSelected = true;
-
-    grades.forEach((subject, grade) {
-      final subjectCredits = credits[subject] ?? 0;
-      totalCredits += subjectCredits;
-
-      if (grade != null && gradeValues.containsKey(grade)) {
-        totalPoints += gradeValues[grade]! * subjectCredits;
-        if (grade != 'F') {
-          earnedCredits += subjectCredits;
-        }
-      } else {
-        allGradesSelected = false;
-      }
-    });
-
-    final estimatedGpa = totalCredits > 0 ? totalPoints / totalCredits : 0;
-
-    return Card(
-      margin: EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Semester Summary',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildSummaryItem('Total Credits', '$totalCredits'),
-                _buildSummaryItem('Earned Credits', '$earnedCredits'),
-              ],
-            ),
-            SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildSummaryItem('Completion',
-                    '${grades.values.where((g) => g != null).length}/${grades.length}'),
-                _buildSummaryItem(
-                  'Estimated GPA',
-                  allGradesSelected ? estimatedGpa.toStringAsFixed(2) : 'N/A',
-                  isHighlighted: allGradesSelected,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSummaryItem(String label, String value,
-      {bool isHighlighted = false}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[600],
-          ),
-        ),
-        SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: isHighlighted ? Colors.blue : Colors.black,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class GPADisplay extends StatelessWidget {
-  final double? gpa;
-  final double? cgpa;
-
-  const GPADisplay({required this.gpa, required this.cgpa});
-
-  Color _getGpaColor(double? gpa) {
-    if (gpa == null) return Colors.grey;
-    if (gpa >= 9) return Colors.green;
-    if (gpa >= 8) return Colors.lightGreen;
-    if (gpa >= 7) return Colors.blue;
-    if (gpa >= 6) return Colors.orange;
-    return Colors.red;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(top: 16),
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.blue[50],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          Text(
-            'Results',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.blue[800],
-            ),
-          ),
-          SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildResultItem('Semester GPA', gpa?.toStringAsFixed(2) ?? 'N/A',
-                  _getGpaColor(gpa)),
-              _buildResultItem('CGPA', cgpa?.toStringAsFixed(2) ?? 'N/A',
-                  _getGpaColor(cgpa)),
-            ],
-          ),
-          SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: (gpa ?? 0) / 10,
-            backgroundColor: Colors.grey[200],
-            valueColor: AlwaysStoppedAnimation<Color>(
-              _getGpaColor(gpa),
-            ),
-            minHeight: 8,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildResultItem(String label, String value, Color color) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[600],
-          ),
-        ),
-        SizedBox(height: 4),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: color, width: 1),
-          ),
-          child: Text(
-            value,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class GpaCalculator extends StatefulWidget {
-  @override
-  _GpaCalculatorState createState() => _GpaCalculatorState();
-}
-
-class _GpaCalculatorState extends State<GpaCalculator>
-    with TickerProviderStateMixin {
+class _SignUpPageState extends State<SignUpPage> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+  final TextEditingController _ktuidController = TextEditingController();
+  final TextEditingController _targetedCgpaController = TextEditingController();
   final storage = FlutterSecureStorage();
-  late TabController _tabController;
-  Map<String, Map<String, int>> subjectsCredits = {};
-  Map<String, Map<String, String?>> semesterGrades = {};
-  double? gpa;
-  double? cgpa;
-  bool isLoading = false;
 
-  final Map<String, double> gradeValues = {
-    'S': 10,
-    'A': 9,
-    'A+': 8.5,
-    'B+': 8,
-    'B': 7.5,
-    'C+': 7,
-    'C': 6.5,
-    'D+': 6,
-    'P': 5.5,
-    'F': 0,
-  };
+  String? _selectedSemester = "1";
+  String? _selectedDegree;
+  bool _isMinorSelected = false;
+  bool _isLetSelected = false;
+  bool _isHonorSelected = false;
+  bool _showOptions = false;
+  bool _showHonor = false;
+  bool _isLoading = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 1, vsync: this);
-    fetchSubjects();
-    fetchUserData();
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  void _updateTabController() {
-    final newLength = subjectsCredits.keys.length;
-    if (_tabController.length != newLength) {
-      _tabController.dispose();
-      _tabController = TabController(length: newLength, vsync: this);
-    }
-  }
-
-  Future<void> fetchSubjects() async {
-    try {
-      final token = await storage.read(key: 'auth_token');
-      if (token == null) throw Exception('No authentication token found');
-
-      final response = await http.get(
-        Uri.parse('http://10.0.2.2:8000/get_subjects/'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body) as Map<String, dynamic>;
-        setState(() {
-          subjectsCredits = data.map((semesterKey, subjectsMap) {
-            return MapEntry(
-              semesterKey,
-              (subjectsMap as Map<String, dynamic>).map<String, int>(
-                (subject, credit) => MapEntry(subject, credit as int),
-              ),
-            );
-          });
-
-          semesterGrades = subjectsCredits.map((semester, subjects) => MapEntry(
-              semester, subjects.map((subject, _) => MapEntry(subject, null))));
-
-          _updateTabController();
-        });
-      } else {
-        throw Exception('Failed to load subjects: ${response.statusCode}');
-      }
-    } catch (e) {
-      print("Error fetching subjects: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to fetch subjects: $e')),
-      );
-    }
-  }
-
-  Future<void> fetchUserData() async {
-    try {
-      final token = await storage.read(key: 'auth_token');
-      if (token == null) throw Exception('No authentication token found');
-
-      final response = await http.get(
-        Uri.parse('http://10.0.2.2:8000/get_user_data/'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-
-      if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
-        setState(() {
-          cgpa = responseData['cgpa']?.toDouble();
-          for (var semesterData in responseData['semesters']) {
-            String semesterKey = semesterData['semester'];
-            semesterGrades[semesterKey] = {};
-            for (var subject in semesterData['subjects']) {
-              String subjectName = subject['name'];
-              semesterGrades[semesterKey]![subjectName] = subject['grade'];
-            }
-          }
-        });
-      } else {
-        throw Exception('Failed to fetch user data: ${response.statusCode}');
-      }
-    } catch (e) {
-      print("Error fetching user data: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to fetch user data: $e')),
-      );
-    }
-  }
-
-  Future<void> calculateGPA() async {
+  void _checkSemester(String? value) {
+    final semester = int.tryParse(value ?? '') ?? 0;
     setState(() {
-      isLoading = true;
+      _showOptions = semester > 2; // Controls Minor/Let visibility
+      _showHonor = semester > 3; // Controls Honor visibility
     });
-
-    try {
-      final token = await storage.read(key: 'auth_token');
-      if (token == null) throw Exception('No authentication token found');
-
-      final semester = subjectsCredits.keys.elementAt(_tabController.index);
-
-      Map<String, String?> formattedSubjectGrades = {
-        for (var entry in semesterGrades[semester]!.entries)
-          entry.key: entry.value
-      };
-
-      final payload = json.encode({
-        'semester': semester,
-        'grades': formattedSubjectGrades,
-      });
-
-      final response = await http.post(
-        Uri.parse('http://10.0.2.2:8000/calculate_gpa/'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: payload,
-      );
-
-      if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
-        setState(() {
-          gpa = responseData['semester_gpa']?.toDouble();
-          cgpa = responseData['cgpa']?.toDouble();
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('GPA calculated successfully!')),
-        );
-      } else {
-        throw Exception('Failed to calculate GPA: ${response.statusCode}');
-      }
-    } catch (e) {
-      print("An error occurred: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to calculate GPA: $e')),
-      );
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Widget _buildSubjectCard(String semester, String subject, int credits) {
-    return SubjectCard(
-      subjectName: subject,
-      credits: credits,
-      selectedGrade: semesterGrades[semester]![subject],
-      onGradeChanged: (value) {
-        setState(() => semesterGrades[semester]![subject] = value);
-      },
-      gradeValues: gradeValues,
-    );
-  }
-
-  Widget _buildSemesterView(String semester) {
-    final semesterData = subjectsCredits[semester]!;
-    final grades = semesterGrades[semester]!;
-
-    int totalCredits =
-        semesterData.values.fold(0, (sum, credit) => sum + credit);
-    int completedSubjects =
-        grades.values.where((grade) => grade != null).length;
-    int totalSubjects = grades.length;
-
-    double? estimatedGpa;
-    if (completedSubjects == totalSubjects) {
-      double totalPoints = 0;
-      int totalCreditsForGpa = 0;
-      grades.forEach((subject, grade) {
-        if (grade != null && gradeValues.containsKey(grade)) {
-          final credit = semesterData[subject] ?? 0;
-          totalPoints += gradeValues[grade]! * credit;
-          totalCreditsForGpa += credit;
-        }
-      });
-      estimatedGpa =
-          totalCreditsForGpa > 0 ? totalPoints / totalCreditsForGpa : 0;
-    }
-
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        children: [
-          SemesterSummaryCard(
-            grades: grades,
-            credits: semesterData,
-            gradeValues: gradeValues,
-          ),
-          SizedBox(height: 16),
-          ...semesterData.entries.map((entry) => Padding(
-                padding: EdgeInsets.only(bottom: 12),
-                child: _buildSubjectCard(semester, entry.key, entry.value),
-              )),
-          if (gpa != null &&
-              semester == subjectsCredits.keys.elementAt(_tabController.index))
-            GPADisplay(gpa: gpa, cgpa: cgpa),
-        ],
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('GPA Calculator'),
-        bottom: subjectsCredits.isNotEmpty
-            ? TabBar(
-                controller: _tabController,
-                isScrollable: true,
-                tabs: subjectsCredits.keys.map((semester) {
-                  return Tab(text: semester.replaceAll('_', ' ').toUpperCase());
-                }).toList(),
-              )
-            : null,
+        title: Text('Sign Up'),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pushReplacementNamed(context, '/'),
+        ),
+        backgroundColor: const Color.fromARGB(255, 20, 53, 89),
       ),
-      body: subjectsCredits.isNotEmpty
-          ? TabBarView(
-              controller: _tabController,
-              children: subjectsCredits.keys.map(_buildSemesterView).toList(),
-            )
-          : Center(child: CircularProgressIndicator()),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          final currentSemester =
-              subjectsCredits.keys.elementAt(_tabController.index);
-          if (semesterGrades[currentSemester]!
-              .values
-              .any((grade) => grade == null)) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Please select grades for all subjects')),
-            );
-            return;
-          }
-          calculateGPA();
-        },
-        child: isLoading
-            ? CircularProgressIndicator(color: Colors.white)
-            : Icon(Icons.calculate),
+      backgroundColor: const Color.fromARGB(255, 20, 53, 89),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header Section
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Thqdu',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.menu,
+                              color: Colors.white, size: 32),
+                          onPressed: () {},
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  // Title
+                  const Center(
+                    child: Text(
+                      'Create Account Now!',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                  // Form Fields
+                  _buildTextField(_usernameController, 'Username'),
+                  _buildTextField(_emailController, 'Gmail', isEmail: true),
+                  _buildTextField(_passwordController, 'Password',
+                      isPassword: true),
+                  _buildTextField(
+                      _confirmPasswordController, 'Confirm Password',
+                      isPassword: true),
+                  _buildTextField(_ktuidController, 'KTU ID'),
+                  // Targeted CGPA
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20.0),
+                    child: Row(
+                      children: [
+                        const Text(
+                          'Targeted CGPA:',
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
+                        const SizedBox(width: 10),
+                        Container(
+                          width: 50,
+                          height: 50,
+                          child: TextFormField(
+                            controller: _targetedCgpaController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: const Color(0xFFF8F0E3),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty)
+                                return 'Required';
+                              final cgpa = double.tryParse(value);
+                              if (cgpa == null || cgpa < 0 || cgpa > 10)
+                                return 'Invalid';
+                              return null;
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Semester & Degree
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20.0),
+                    child: Row(
+                      children: [
+                        const Text('Semester : ',
+                            style:
+                                TextStyle(color: Colors.white, fontSize: 16)),
+                        const SizedBox(width: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 15),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8F0E3),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: DropdownButton<String>(
+                            value: _selectedSemester,
+                            underline: Container(),
+                            dropdownColor: const Color(0xFFF8F0E3),
+                            items: List.generate(
+                                    8, (index) => (index + 1).toString())
+                                .map((value) => DropdownMenuItem(
+                                    value: value, child: Text(value)))
+                                .toList(),
+                            onChanged: (value) => setState(() {
+                              _selectedSemester = value;
+                              _checkSemester(value);
+                            }),
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+                        const Text('Degree : ',
+                            style:
+                                TextStyle(color: Colors.white, fontSize: 16)),
+                        const SizedBox(width: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 15),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8F0E3),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: DropdownButton<String>(
+                            value: _selectedDegree,
+                            underline: Container(),
+                            dropdownColor: const Color(0xFFF8F0E3),
+                            items: ['CSE', 'CE', 'ME', 'EEE']
+                                .map((value) => DropdownMenuItem(
+                                    value: value, child: Text(value)))
+                                .toList(),
+                            onChanged: (value) =>
+                                setState(() => _selectedDegree = value),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Options
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20.0),
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 30.0,
+                      children: [
+                        // Always visible "Are you Let?" radio
+                        _buildRadioButton('Are you Let?', _isLetSelected,
+                            (value) {
+                          setState(() => _isLetSelected = value ?? false);
+                        }),
+
+                        // Conditionally visible Minor radio
+                        if (_showOptions)
+                          _buildRadioButton('Minor', _isMinorSelected, (value) {
+                            setState(() => _isMinorSelected = value ?? false);
+                          }),
+
+                        // Conditionally visible Honor radio
+                        if (_showHonor)
+                          _buildRadioButton('Honor', _isHonorSelected, (value) {
+                            setState(() => _isHonorSelected = value ?? false);
+                          }),
+                      ],
+                    ),
+                  ),
+                  // Sign Up Button
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 30.0),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _submitForm,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF8F0E3),
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30)),
+                        ),
+                        child: _isLoading
+                            ? CircularProgressIndicator(color: Colors.black)
+                            : const Text('Sign Up',
+                                style: TextStyle(
+                                    color: Colors.black, fontSize: 18)),
+                      ),
+                    ),
+                  ),
+                  // Bottom Image
+                  Container(
+                    height: 150,
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          child: Image.asset('assets/hand_with_phone.png',
+                              width: 150),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
+
+  Widget _buildTextField(TextEditingController controller, String label,
+      {bool isEmail = false, bool isPassword = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15.0),
+      child: TextFormField(
+        controller: controller,
+        obscureText: isPassword,
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: const Color(0xFFF8F0E3),
+          hintText: label,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide.none,
+          ),
+        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) return 'Please enter $label';
+          if (isEmail && !value.contains('@')) return 'Invalid email';
+          if (isPassword && value.length < 6) return 'Minimum 6 characters';
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildRadioButton(
+      String title, bool groupValue, Function(bool?) onChanged) {
+    return Row(
+      children: [
+        Text(title, style: TextStyle(color: Colors.white, fontSize: 16)),
+        Checkbox(
+          value: groupValue,
+          onChanged: onChanged,
+          fillColor: MaterialStateProperty.all(Colors.white),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Passwords do not match')));
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final userData = {
+        'username': _usernameController.text,
+        'email': _emailController.text,
+        'password': _passwordController.text,
+        'KTUID': _ktuidController.text,
+        'semester': int.parse(_selectedSemester ?? '1'),
+        'degree': _selectedDegree,
+        'targeted_cgpa': _targetedCgpaController.text,
+        'is_minor': _isMinorSelected,
+        'is_let': _isLetSelected,
+        'is_honors': _isHonorSelected,
+      };
+
+      final signUpResponse = await ApiService.signUp(userData);
+      if (signUpResponse.statusCode != 201) {
+        throw jsonDecode(signUpResponse.body)['error'] ?? 'Signup failed';
+      }
+
+      final loginResponse = await http.post(
+        Uri.parse('http://10.0.2.2:8000/token/'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'email': _emailController.text,
+          'password': _passwordController.text,
+        }),
+      );
+
+      if (loginResponse.statusCode != 200) {
+        throw jsonDecode(loginResponse.body)['error'] ?? 'Login failed';
+      }
+
+      final loginData = json.decode(loginResponse.body);
+      await storage.write(key: 'auth_token', value: loginData['access']);
+      await storage.write(key: 'refresh_token', value: loginData['refresh']);
+      await storage.write(
+        key: 'current_semester',
+        value: _isLetSelected ? 'semester_3' : 'semester_1',
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Account created successfully!')));
+      Navigator.pushNamed(context, '/gpa');
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 }
+*/
